@@ -3,62 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AI Doc project overview: traceable, long-term project memory for AI agents.">
-  <title>AI Doc | Project Overview</title>
+  <meta name="description" content="AI Doc turns verified code understanding into durable, traceable project knowledge.">
+  <title>AI Doc | Verifiable Project Knowledge</title>
   <style>
     :root {
-      --paper: #f4f6f7;
-      --surface: #ffffff;
-      --ink: #15242d;
-      --muted: #61717a;
-      --line: #cbd5d9;
-      --line-strong: #97a8af;
-      --teal: #087e78;
-      --teal-dark: #075c59;
-      --coral: #e2533f;
-      --yellow: #f1bd43;
-      --blue: #3978a8;
-      --green-soft: #dceee8;
-      --blue-soft: #dcebf4;
-      --coral-soft: #f8e2dd;
-      --shadow: 0 18px 50px rgba(21, 36, 45, 0.09);
+      --paper: #f3f1eb;
+      --surface: #fffefa;
+      --ink: #17272b;
+      --muted: #647176;
+      --line: #c7cecb;
+      --line-dark: #87989a;
+      --teal: #087a72;
+      --teal-dark: #075851;
+      --teal-soft: #dcece6;
+      --coral: #db513d;
+      --coral-soft: #f6dfd9;
+      --gold: #e1ad34;
+      --blue: #376f96;
+      --blue-soft: #dbe7ee;
+      --night: #142327;
       --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-      --sans: "Aptos", "Segoe UI", "Microsoft YaHei", sans-serif;
-      --display: Georgia, "Noto Serif SC", "Songti SC", serif;
+      --sans: "Aptos", "Segoe UI", sans-serif;
+      --display: Georgia, "Times New Roman", serif;
+      --shadow: 0 22px 60px rgba(23, 39, 43, 0.12);
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       color: var(--ink);
       background-color: var(--paper);
       background-image:
-        linear-gradient(rgba(57, 120, 168, 0.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(57, 120, 168, 0.055) 1px, transparent 1px);
+        linear-gradient(rgba(55, 111, 150, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(55, 111, 150, 0.05) 1px, transparent 1px);
       background-size: 24px 24px;
       font-family: var(--sans);
       line-height: 1.6;
     }
 
-    button,
-    a {
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    button {
-      font: inherit;
-    }
-
-    a {
-      color: inherit;
-    }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    a { color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
 
     .skip-link {
       position: fixed;
@@ -67,1545 +54,544 @@
       z-index: 100;
       padding: 8px 12px;
       color: white;
-      background: var(--ink);
+      background: var(--night);
       transform: translateY(-150%);
     }
 
-    .skip-link:focus {
-      transform: translateY(0);
-    }
-
+    .skip-link:focus { transform: translateY(0); }
     .topbar {
       position: sticky;
       top: 0;
       z-index: 20;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 64px;
       padding: 0 max(24px, calc((100vw - 1180px) / 2));
-      border-bottom: 1px solid rgba(151, 168, 175, 0.75);
-      background: rgba(244, 246, 247, 0.92);
+      border-bottom: 1px solid rgba(135, 152, 154, 0.75);
+      background: rgba(243, 241, 235, 0.93);
       backdrop-filter: blur(14px);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      text-decoration: none;
-    }
-
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; text-decoration: none; }
     .brand-mark {
+      width: 31px;
+      height: 31px;
       display: grid;
-      width: 30px;
-      height: 30px;
       place-items: center;
       color: white;
       background: var(--teal);
-      font: 700 14px/1 var(--mono);
+      font: 700 13px/1 var(--mono);
     }
 
-    .brand small {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
+    .brand small { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .nav { display: flex; align-items: center; gap: 2px; }
     .nav a {
-      padding: 8px 10px;
+      padding: 8px 9px;
       border-bottom: 2px solid transparent;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       text-decoration: none;
     }
 
-    .nav a:hover,
-    .nav a.active {
-      border-color: var(--coral);
-      color: var(--ink);
-    }
-
-    .hero {
-      min-height: calc(100vh - 64px);
-      max-height: 860px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
-      align-items: center;
-      gap: 72px;
-      width: min(1180px, calc(100% - 48px));
-      margin: 0 auto;
-      padding: 72px 0 96px;
-    }
-
+    .nav a:hover, .nav a.active { color: var(--ink); border-color: var(--coral); }
     .eyebrow {
       display: flex;
       align-items: center;
       gap: 10px;
       margin: 0 0 18px;
       color: var(--teal-dark);
-      font: 700 12px/1.3 var(--mono);
-      letter-spacing: 0;
+      font: 700 11px/1.4 var(--mono);
       text-transform: uppercase;
     }
 
     .eyebrow::before {
       width: 28px;
       height: 3px;
+      flex: 0 0 auto;
       background: var(--coral);
       content: "";
     }
 
-    h1,
-    h2,
-    h3,
-    p {
-      margin-top: 0;
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+      align-items: center;
+      gap: 72px;
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 72px 0 92px;
     }
 
     h1 {
-      max-width: 780px;
+      max-width: 730px;
       margin-bottom: 24px;
       font-family: var(--display);
-      font-size: clamp(58px, 8vw, 108px);
-      line-height: 0.92;
-      letter-spacing: 0;
+      font-size: clamp(54px, 7vw, 96px);
+      font-weight: 500;
+      line-height: 0.95;
     }
 
-    h1 span {
-      display: block;
-      margin-top: 18px;
-      color: var(--teal-dark);
-      font-family: var(--sans);
-      font-size: clamp(20px, 2.5vw, 34px);
-      line-height: 1.25;
-      font-weight: 650;
-    }
-
-    .hero-copy > p:not(.eyebrow) {
-      max-width: 670px;
-      margin-bottom: 30px;
-      color: #485a63;
-      font-size: 18px;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
+    h1 em { color: var(--teal-dark); font-style: normal; }
+    .hero-lede { max-width: 650px; margin-bottom: 30px; color: #485a5f; font-size: 18px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
     .button {
-      display: inline-flex;
       min-height: 44px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 9px;
       padding: 10px 17px;
-      border: 1px solid var(--ink);
+      border: 1px solid var(--night);
       border-radius: 4px;
       color: white;
-      background: var(--ink);
+      background: var(--night);
       font-weight: 700;
       text-decoration: none;
-      cursor: pointer;
     }
 
-    .button.secondary {
-      color: var(--ink);
-      background: transparent;
-    }
-
-    .button:hover {
-      color: white;
-      border-color: var(--teal-dark);
-      background: var(--teal-dark);
-    }
-
-    .hero-visual {
-      position: relative;
-      min-height: 470px;
-      border-left: 1px solid var(--line-strong);
-      border-bottom: 1px solid var(--line-strong);
-    }
-
-    .hero-visual::before,
-    .hero-visual::after {
+    .button.secondary { color: var(--night); background: transparent; }
+    .button:hover { color: white; border-color: var(--teal-dark); background: var(--teal-dark); }
+    .document-visual { position: relative; min-height: 530px; border-left: 1px solid var(--line-dark); border-bottom: 1px solid var(--line-dark); }
+    .document-visual::before {
       position: absolute;
+      top: 0;
+      left: 12px;
       color: var(--muted);
+      content: "DOCUMENT / ANATOMY";
       font: 11px/1 var(--mono);
     }
 
-    .hero-visual::before {
-      top: 0;
-      left: 12px;
-      content: "PROJECT MEMORY / 001";
-    }
-
-    .hero-visual::after {
-      right: 0;
-      bottom: 10px;
-      content: "TRACEABLE · VERSIONED · LOCAL-FIRST";
-    }
-
-    .memory-sheet {
+    .document-card {
       position: absolute;
-      top: 54px;
+      top: 45px;
       right: 0;
-      width: calc(100% - 38px);
-      padding: 26px;
-      border: 1px solid var(--line-strong);
+      width: calc(100% - 34px);
+      padding: 28px;
+      border: 1px solid var(--line-dark);
       border-top: 6px solid var(--teal);
       background: var(--surface);
       box-shadow: var(--shadow);
       animation: reveal 650ms ease-out both;
     }
 
-    .sheet-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 22px;
-    }
-
-    .sheet-head strong {
-      font: 700 13px/1 var(--mono);
-    }
-
-    .status {
-      padding: 4px 8px;
-      border: 1px solid #93bdaf;
+    .document-card header { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 26px; }
+    .document-card header strong { font: 700 12px/1 var(--mono); }
+    .verified {
+      padding: 5px 8px;
+      border: 1px solid #88b5a7;
       border-radius: 99px;
       color: var(--teal-dark);
-      background: var(--green-soft);
+      background: var(--teal-soft);
       font: 700 10px/1 var(--mono);
     }
 
-    .memory-title {
-      margin-bottom: 8px;
-      font-family: var(--display);
-      font-size: 25px;
-      line-height: 1.2;
-    }
-
-    .memory-sheet > p {
-      margin-bottom: 24px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .trace {
-      display: grid;
-      grid-template-columns: 18px 1fr auto;
-      align-items: start;
-      gap: 10px;
-      padding: 11px 0;
-      border-top: 1px solid var(--line);
-      font: 12px/1.5 var(--mono);
-    }
-
-    .trace i {
-      width: 9px;
-      height: 9px;
-      margin-top: 4px;
-      border: 2px solid var(--teal);
-      border-radius: 50%;
-    }
-
-    .trace span {
-      overflow-wrap: anywhere;
-    }
-
-    .trace code {
-      color: var(--coral);
-    }
-
-    .version-rail {
+    .claim { margin-bottom: 26px; font-family: var(--display); font-size: 27px; line-height: 1.23; }
+    .anatomy-row { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .anatomy-row span { color: var(--coral); font: 700 10px/1.5 var(--mono); }
+    .anatomy-row strong { font-size: 13px; overflow-wrap: anywhere; }
+    .source-tab {
       position: absolute;
-      right: -22px;
-      bottom: 58px;
-      display: grid;
-      gap: 6px;
-      width: 100px;
-      padding: 13px;
+      right: -18px;
+      bottom: 31px;
+      width: 126px;
+      padding: 14px;
       color: white;
       background: var(--blue);
-      box-shadow: 7px 7px 0 var(--yellow);
-      font: 12px/1.3 var(--mono);
+      box-shadow: 7px 7px 0 var(--gold);
+      font: 11px/1.45 var(--mono);
       animation: reveal 650ms 180ms ease-out both;
     }
 
-    .version-rail strong {
-      font-size: 24px;
-    }
-
-    main {
-      overflow: hidden;
-    }
-
+    .source-tab strong { display: block; margin-top: 4px; font-size: 18px; }
+    main { overflow: hidden; }
     .section {
       padding: 100px max(24px, calc((100vw - 1180px) / 2));
-      border-top: 1px solid var(--line-strong);
+      border-top: 1px solid var(--line-dark);
       scroll-margin-top: 64px;
     }
 
-    .section.white {
-      background: rgba(255, 255, 255, 0.84);
-    }
-
+    .section.white { background: rgba(255, 254, 250, 0.88); }
     .section.dark {
-      color: #eef5f5;
-      background: var(--ink);
+      color: #edf5f2;
+      background-color: var(--night);
       background-image:
-        linear-gradient(rgba(220, 238, 232, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(220, 238, 232, 0.05) 1px, transparent 1px);
+        linear-gradient(rgba(220, 236, 230, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(220, 236, 230, 0.05) 1px, transparent 1px);
       background-size: 24px 24px;
     }
 
-    .section-heading {
-      display: grid;
-      grid-template-columns: 0.7fr 1.3fr;
-      gap: 60px;
-      align-items: end;
-      margin-bottom: 58px;
-    }
-
+    .section-heading { display: grid; grid-template-columns: 0.78fr 1.22fr; gap: 64px; align-items: end; margin-bottom: 58px; }
     .section-heading h2 {
-      margin-bottom: 0;
+      margin: 0;
       font-family: var(--display);
-      font-size: clamp(36px, 5vw, 60px);
+      font-size: clamp(38px, 5vw, 62px);
+      font-weight: 500;
       line-height: 1.02;
-      letter-spacing: 0;
     }
 
-    .section-heading > p {
-      max-width: 640px;
-      margin: 0;
-      color: var(--muted);
-      font-size: 17px;
-    }
-
-    .dark .section-heading > p,
-    .dark .eyebrow {
-      color: #b9c8cd;
-    }
-
-    .principles {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border-top: 1px solid var(--line-strong);
-      border-bottom: 1px solid var(--line-strong);
-    }
-
-    .principle {
-      min-height: 250px;
-      padding: 30px 28px 34px;
-      border-right: 1px solid var(--line-strong);
-    }
-
-    .principle:last-child {
-      border-right: 0;
-    }
-
-    .principle-num {
-      display: block;
-      margin-bottom: 44px;
-      color: var(--coral);
-      font: 700 12px/1 var(--mono);
-    }
-
-    .principle h3 {
-      margin-bottom: 12px;
-      font-family: var(--display);
-      font-size: 25px;
-    }
-
-    .principle p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .impact-compare {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      margin-bottom: 28px;
-      border: 1px solid var(--line-strong);
-      background: var(--surface);
-    }
-
-    .impact-path {
-      padding: 30px;
-    }
-
-    .impact-path:first-child {
-      border-right: 1px solid var(--line-strong);
-      background: #edf0f1;
-    }
-
-    .impact-path.with-aidoc {
-      border-top: 6px solid var(--teal);
-      background: var(--green-soft);
-    }
-
-    .impact-label {
-      display: block;
-      margin-bottom: 28px;
-      color: var(--muted);
-      font: 700 11px/1 var(--mono);
-    }
-
-    .with-aidoc .impact-label {
-      color: var(--teal-dark);
-    }
-
-    .impact-steps {
-      display: grid;
-      gap: 0;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: impact-step;
-    }
-
-    .impact-steps li {
-      display: grid;
-      grid-template-columns: 30px 1fr;
-      gap: 12px;
-      padding: 13px 0;
-      border-top: 1px solid rgba(97, 113, 122, 0.3);
-      counter-increment: impact-step;
-    }
-
-    .impact-steps li::before {
-      color: var(--coral);
-      content: "0" counter(impact-step);
-      font: 700 11px/1.6 var(--mono);
-    }
-
-    .with-aidoc .impact-steps li::before {
-      color: var(--teal-dark);
-    }
-
-    .impact-steps strong {
-      display: block;
-      margin-bottom: 3px;
-      font-size: 15px;
-    }
-
-    .impact-steps p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .outcomes {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--line-strong);
-      border-left: 1px solid var(--line-strong);
-    }
-
-    .outcome {
-      min-height: 220px;
-      padding: 25px;
-      border-right: 1px solid var(--line-strong);
-      border-bottom: 1px solid var(--line-strong);
-    }
-
-    .outcome code {
-      display: block;
-      margin-bottom: 38px;
-      color: var(--coral);
-      font: 700 11px/1 var(--mono);
-    }
-
-    .outcome h3 {
-      margin-bottom: 9px;
-      font-family: var(--display);
-      font-size: 22px;
-    }
-
-    .outcome p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .architecture-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .segmented {
-      display: inline-grid;
-      grid-template-columns: 1fr 1fr;
-      padding: 3px;
-      border: 1px solid var(--line-strong);
-      border-radius: 5px;
-      background: #e7ecee;
-    }
-
-    .segment {
-      min-width: 142px;
-      padding: 8px 13px;
-      border: 0;
-      border-radius: 3px;
-      color: var(--muted);
-      background: transparent;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .segment.active {
-      color: white;
-      background: var(--teal-dark);
-    }
-
-    .architecture-state {
-      color: var(--muted);
-      font: 12px/1.3 var(--mono);
-    }
-
-    .architecture-panel {
-      display: none;
-      min-height: 430px;
-      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
-      gap: 24px;
-      animation: reveal 350ms ease-out both;
-    }
-
-    .architecture-panel.active {
-      display: grid;
-    }
-
-    .diagram {
-      display: grid;
-      grid-template-columns: 1fr 54px 1.2fr 54px 1fr;
-      align-items: center;
-      min-height: 430px;
-      padding: 42px;
-      border: 1px solid var(--line-strong);
-      background: var(--surface);
-    }
-
-    .diagram-column {
-      display: grid;
-      gap: 12px;
-    }
-
-    .node {
-      position: relative;
-      min-height: 62px;
+    .section-heading > p { max-width: 650px; margin: 0; color: var(--muted); font-size: 17px; }
+    .dark .section-heading > p, .dark .eyebrow { color: #b9c9c8; }
+    .definition { display: grid; grid-template-columns: 1.35fr 0.65fr; gap: 28px; align-items: stretch; }
+    .formula-card {
+      min-height: 330px;
       display: grid;
       align-content: center;
-      padding: 13px 15px;
-      border: 1px solid var(--line-strong);
-      border-left: 4px solid var(--blue);
-      background: #f9fbfb;
+      padding: 46px;
+      border: 1px solid var(--line-dark);
+      background: var(--surface);
     }
 
-    .node.primary {
-      border-left-color: var(--teal);
-      background: var(--green-soft);
-    }
+    .formula-card code { margin-bottom: 22px; color: var(--coral); font: 700 11px/1 var(--mono); }
+    .formula-card p { margin: 0; font-family: var(--display); font-size: clamp(30px, 4vw, 51px); line-height: 1.28; }
+    .formula-card p strong { color: var(--teal-dark); font-weight: 500; }
+    .definition-note { display: grid; align-content: space-between; padding: 30px; border: 1px solid var(--line-dark); background: var(--coral-soft); }
+    .definition-note code { color: var(--coral); font: 700 11px/1 var(--mono); }
+    .definition-note blockquote { margin: 48px 0 0; font-family: var(--display); font-size: 25px; line-height: 1.35; }
+    .levels { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 28px; border-top: 1px solid var(--line-dark); border-left: 1px solid var(--line-dark); }
+    .level { min-height: 235px; padding: 27px; border-right: 1px solid var(--line-dark); border-bottom: 1px solid var(--line-dark); }
+    .level:nth-child(2) { background: var(--blue-soft); }
+    .level:nth-child(3) { background: var(--teal-soft); }
+    .level code { display: block; margin-bottom: 42px; color: var(--coral); font: 700 11px/1 var(--mono); }
+    .level h3 { margin-bottom: 9px; font-family: var(--display); font-size: 25px; font-weight: 500; }
+    .level p { margin: 0; color: var(--muted); font-size: 14px; }
 
-    .node.storage {
-      border-left-color: var(--coral);
-      background: var(--coral-soft);
-    }
+    .core-value { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 68px; align-items: center; }
+    .ledger-statement { padding-left: 28px; border-left: 6px solid var(--gold); }
+    .ledger-statement p { margin: 0; font-family: var(--display); font-size: clamp(31px, 4vw, 48px); line-height: 1.22; }
+    .ledger-statement strong { color: var(--gold); font-weight: 500; }
+    .value-list { display: grid; border-top: 1px solid #5c7073; }
+    .value-item { display: grid; grid-template-columns: 42px 1fr; gap: 18px; padding: 22px 0; border-bottom: 1px solid #5c7073; }
+    .value-item > span { color: var(--gold); font: 700 11px/1.6 var(--mono); }
+    .value-item h3 { margin-bottom: 5px; font-size: 17px; }
+    .value-item p { margin: 0; color: #b9c9c8; font-size: 14px; }
 
-    .node.cloud {
-      border-left-color: var(--yellow);
-      background: #fff5d8;
-    }
+    .record-grid { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line-dark); border-left: 1px solid var(--line-dark); }
+    .record-part { min-height: 250px; padding: 24px; border-right: 1px solid var(--line-dark); border-bottom: 1px solid var(--line-dark); background: rgba(255, 254, 250, 0.65); }
+    .record-part:nth-child(2) { background: var(--blue-soft); }
+    .record-part:nth-child(3) { background: var(--teal-soft); }
+    .record-part:nth-child(4) { background: var(--coral-soft); }
+    .record-part:nth-child(5) { background: #f7eac9; }
+    .record-part code { display: block; margin-bottom: 48px; color: var(--teal-dark); font: 700 10px/1 var(--mono); }
+    .record-part h3 { margin-bottom: 9px; font-family: var(--display); font-size: 23px; font-weight: 500; }
+    .record-part p { margin: 0; color: var(--muted); font-size: 13px; }
 
-    .node strong {
-      font-size: 14px;
-    }
-
-    .node small {
-      color: var(--muted);
-      font: 11px/1.4 var(--mono);
-    }
-
-    .arrow {
-      color: var(--teal-dark);
-      text-align: center;
-      font: 26px/1 var(--mono);
-    }
-
-    .architecture-notes {
-      display: grid;
-      grid-template-rows: repeat(3, 1fr);
-      border-top: 1px solid var(--line-strong);
-    }
-
-    .architecture-note {
-      padding: 20px 4px 20px 22px;
-      border-bottom: 1px solid var(--line-strong);
-    }
-
-    .architecture-note strong {
-      display: block;
-      margin-bottom: 5px;
-      font: 700 13px/1.4 var(--mono);
-    }
-
-    .architecture-note p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .lifecycle {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 0;
-      margin-bottom: 72px;
-    }
-
-    .stage {
-      position: relative;
-      min-height: 190px;
-      padding: 26px 20px;
-      border-top: 1px solid #69808a;
-      border-bottom: 1px solid #69808a;
-      border-left: 1px solid #69808a;
-    }
-
-    .stage:last-child {
-      border-right: 1px solid #69808a;
-    }
-
-    .stage:not(:last-child)::after {
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 64px; }
+    .flow-step { position: relative; min-height: 205px; padding: 25px 20px; border: 1px solid #5c7073; border-right: 0; }
+    .flow-step:last-child { border-right: 1px solid #5c7073; }
+    .flow-step:not(:last-child)::after {
       position: absolute;
-      top: 33px;
-      right: -9px;
+      top: 32px;
+      right: -8px;
       z-index: 2;
-      width: 16px;
-      height: 16px;
-      border-top: 1px solid var(--yellow);
-      border-right: 1px solid var(--yellow);
-      background: var(--ink);
+      width: 15px;
+      height: 15px;
+      border-top: 1px solid var(--gold);
+      border-right: 1px solid var(--gold);
+      background: var(--night);
       content: "";
       transform: rotate(45deg);
     }
 
-    .stage-index {
-      color: var(--yellow);
-      font: 700 11px/1 var(--mono);
-    }
+    .flow-step code { color: var(--gold); font: 700 10px/1 var(--mono); }
+    .flow-step h3 { margin: 44px 0 8px; font-size: 17px; }
+    .flow-step p { margin: 0; color: #b9c9c8; font-size: 13px; }
+    .impact { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line-dark); border-left: 1px solid var(--line-dark); }
+    .impact-card { min-height: 225px; padding: 25px; border-right: 1px solid var(--line-dark); border-bottom: 1px solid var(--line-dark); }
+    .impact-card code { display: block; margin-bottom: 42px; color: var(--coral); font: 700 11px/1 var(--mono); }
+    .impact-card h3 { margin-bottom: 9px; font-family: var(--display); font-size: 23px; font-weight: 500; }
+    .impact-card p { margin: 0; color: var(--muted); font-size: 13px; }
 
-    .stage h3 {
-      margin: 42px 0 9px;
-      font-size: 17px;
-    }
-
-    .stage p {
-      margin: 0;
-      color: #aebec4;
-      font-size: 13px;
-    }
-
-    .retrieval {
+    .runtime-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .segmented { display: inline-grid; grid-template-columns: 1fr 1fr; padding: 3px; border: 1px solid var(--line-dark); border-radius: 5px; background: #e4e7e3; }
+    .segment { min-width: 170px; padding: 9px 14px; border: 0; border-radius: 3px; color: var(--muted); background: transparent; font-weight: 700; cursor: pointer; }
+    .segment.active { color: white; background: var(--teal-dark); }
+    .runtime-state { color: var(--muted); font: 11px/1.3 var(--mono); }
+    .runtime-panel { display: none; animation: reveal 300ms ease-out both; }
+    .runtime-panel.active { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 24px; }
+    .runtime-diagram {
       display: grid;
-      grid-template-columns: 1fr 0.72fr;
-      gap: 56px;
+      grid-template-columns: 1fr 44px 1.15fr 44px 1fr;
       align-items: center;
+      min-height: 330px;
+      padding: 35px;
+      border: 1px solid var(--line-dark);
+      background: var(--surface);
     }
 
-    .score-visual {
-      padding: 34px;
-      border: 1px solid #69808a;
-      background: rgba(255, 255, 255, 0.035);
-    }
+    .runtime-column { display: grid; gap: 11px; }
+    .node { min-height: 59px; display: grid; align-content: center; padding: 12px 14px; border: 1px solid var(--line-dark); border-left: 4px solid var(--blue); background: #f8faf8; }
+    .node.primary { border-left-color: var(--teal); background: var(--teal-soft); }
+    .node.storage { border-left-color: var(--coral); background: var(--coral-soft); }
+    .node strong { font-size: 13px; }
+    .node small { color: var(--muted); font: 10px/1.4 var(--mono); }
+    .arrow { color: var(--teal-dark); text-align: center; font: 24px/1 var(--mono); }
+    .runtime-notes { display: grid; grid-template-rows: repeat(3, 1fr); border-top: 1px solid var(--line-dark); }
+    .runtime-note { padding: 18px 4px 18px 20px; border-bottom: 1px solid var(--line-dark); }
+    .runtime-note strong { display: block; margin-bottom: 4px; font: 700 12px/1.4 var(--mono); }
+    .runtime-note p { margin: 0; color: var(--muted); font-size: 13px; }
 
-    .score-line {
-      display: grid;
-      grid-template-columns: 80px 1fr 48px;
-      gap: 14px;
-      align-items: center;
-      margin: 17px 0;
-      font: 12px/1 var(--mono);
-    }
-
-    .score-track {
-      height: 9px;
-      background: #3d515a;
-    }
-
-    .score-fill {
-      display: block;
-      height: 100%;
-      background: var(--yellow);
-    }
-
-    .score-fill.semantic {
-      background: #64bdb7;
-    }
-
-    .formula {
-      margin: 0;
-      font-family: var(--display);
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.25;
-    }
-
-    .formula strong {
-      color: var(--yellow);
-      font-family: var(--mono);
-      font-size: 0.75em;
-    }
-
-    .reference-link {
-      display: inline-block;
-      margin-top: 14px;
-      color: var(--yellow);
-      font: 700 13px/1.4 var(--mono);
-      text-underline-offset: 4px;
-    }
-
-    .reference-link:hover {
-      color: white;
-    }
-
-    .retrieval-copy p {
-      color: #b9c8cd;
-    }
-
-    .data-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--line-strong);
-      border-left: 1px solid var(--line-strong);
-    }
-
-    .data-entity {
-      min-height: 260px;
-      padding: 25px;
-      border-right: 1px solid var(--line-strong);
-      border-bottom: 1px solid var(--line-strong);
-      background: rgba(255, 255, 255, 0.5);
-    }
-
-    .data-entity:nth-child(2) {
-      background: var(--blue-soft);
-    }
-
-    .data-entity:nth-child(3) {
-      background: var(--green-soft);
-    }
-
-    .data-entity:nth-child(4) {
-      background: var(--coral-soft);
-    }
-
-    .data-entity code {
-      display: block;
-      margin-bottom: 26px;
-      color: var(--teal-dark);
-      font: 700 13px/1 var(--mono);
-    }
-
-    .data-entity h3 {
-      font-family: var(--display);
-      font-size: 23px;
-    }
-
-    .field-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .field-list li {
-      padding: 6px 0;
-      border-top: 1px solid rgba(97, 113, 122, 0.25);
-      color: var(--muted);
-      font: 12px/1.4 var(--mono);
-    }
-
-    .cli-shell {
-      overflow: hidden;
-      border: 1px solid #516871;
-      background: #0e191f;
-      box-shadow: 14px 14px 0 rgba(241, 189, 67, 0.2);
-    }
-
-    .cli-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 52px;
-      padding: 0 18px;
-      border-bottom: 1px solid #516871;
-      color: #aebec4;
-      font: 12px/1 var(--mono);
-    }
-
-    .cli-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0;
-      border-bottom: 1px solid #516871;
-    }
-
-    .cli-tab {
-      min-height: 44px;
-      padding: 11px 17px;
-      border: 0;
-      border-right: 1px solid #516871;
-      color: #91a5ad;
-      background: transparent;
-      font: 12px/1 var(--mono);
-      cursor: pointer;
-    }
-
-    .cli-tab.active {
-      color: #fff;
-      background: #273a43;
-      box-shadow: inset 0 -3px 0 var(--yellow);
-    }
-
-    .cli-body {
-      position: relative;
-      min-height: 245px;
-      padding: 31px 76px 31px 31px;
-    }
-
-    .cli-example {
-      display: none;
-      margin: 0;
-      color: #dce8eb;
-      font: 14px/1.85 var(--mono);
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .cli-example.active {
-      display: block;
-    }
-
-    .prompt {
-      color: #64bdb7;
-    }
-
-    .argument {
-      color: #f4c95e;
-    }
-
+    .cli-shell { overflow: hidden; border: 1px solid #546b70; background: #0d191d; box-shadow: 14px 14px 0 rgba(225, 173, 52, 0.2); }
+    .cli-head { min-height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 1px solid #546b70; color: #aabcc0; font: 11px/1 var(--mono); }
+    .cli-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #546b70; }
+    .cli-tab { min-height: 43px; padding: 11px 17px; border: 0; border-right: 1px solid #546b70; color: #90a5aa; background: transparent; font: 12px/1 var(--mono); cursor: pointer; }
+    .cli-tab.active { color: white; background: #263a40; box-shadow: inset 0 -3px 0 var(--gold); }
+    .cli-body { position: relative; min-height: 245px; padding: 31px 76px 31px 31px; }
+    .cli-example { display: none; margin: 0; color: #dce8e8; font: 14px/1.85 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .cli-example.active { display: block; }
+    .prompt { color: #64bbb2; }
+    .argument { color: #f0c762; }
     .copy-button {
       position: absolute;
       top: 20px;
       right: 20px;
-      width: 40px;
+      width: 42px;
       height: 40px;
       display: grid;
       place-items: center;
       padding: 0;
-      border: 1px solid #69808a;
+      border: 1px solid #647d82;
       border-radius: 4px;
-      color: #dce8eb;
-      background: #1c2c34;
-      font: 700 11px/1 var(--mono);
+      color: #dce8e8;
+      background: #1b2d32;
+      font: 700 10px/1 var(--mono);
       cursor: pointer;
     }
 
-    .copy-button:hover {
-      border-color: var(--yellow);
-      color: var(--yellow);
-    }
-
-    .roadmap {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      counter-reset: roadmap;
-    }
-
-    .roadmap-item {
-      position: relative;
-      min-height: 250px;
-      padding: 28px;
-      border: 1px solid var(--line-strong);
-      background: var(--surface);
-      counter-increment: roadmap;
-    }
-
-    .roadmap-item.current {
-      border-top: 6px solid var(--teal);
-    }
-
-    .roadmap-item::before {
-      display: block;
-      margin-bottom: 54px;
-      color: var(--coral);
-      content: "0" counter(roadmap);
-      font: 700 12px/1 var(--mono);
-    }
-
-    .roadmap-item h3 {
-      font-family: var(--display);
-      font-size: 23px;
-    }
-
-    .roadmap-item p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .current-label {
-      position: absolute;
-      top: 19px;
-      right: 20px;
-      color: var(--teal-dark);
-      font: 700 10px/1 var(--mono);
-    }
-
+    .copy-button:hover { color: var(--gold); border-color: var(--gold); }
+    .reference-link { display: inline-block; margin-top: 14px; color: var(--gold); font: 700 12px/1.4 var(--mono); text-underline-offset: 4px; }
     footer {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 30px;
       align-items: end;
       padding: 62px max(24px, calc((100vw - 1180px) / 2));
-      border-top: 1px solid var(--line-strong);
-      background: #dfe6e8;
+      border-top: 1px solid var(--line-dark);
+      background: #dfe4e0;
     }
 
-    footer strong {
-      display: block;
-      margin-bottom: 10px;
-      font-family: var(--display);
-      font-size: 34px;
-    }
+    footer strong { display: block; margin-bottom: 8px; font-family: var(--display); font-size: 35px; font-weight: 500; }
+    footer p { max-width: 720px; margin: 0; color: var(--muted); }
+    footer code { color: var(--teal-dark); font: 11px/1.5 var(--mono); }
 
-    footer p {
-      max-width: 680px;
-      margin: 0;
-      color: var(--muted);
-    }
-
-    footer code {
-      color: var(--teal-dark);
-      font: 12px/1.5 var(--mono);
-    }
-
-    @keyframes reveal {
-      from {
-        opacity: 0;
-        transform: translateY(14px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
+    @keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
     @media (max-width: 980px) {
-      .nav {
-        display: none;
-      }
-
-      .hero {
-        grid-template-columns: 1fr;
-        max-height: none;
-        padding-top: 68px;
-      }
-
-      .hero-visual {
-        width: min(560px, 100%);
-      }
-
-      .section-heading {
-        grid-template-columns: 1fr;
-        gap: 18px;
-      }
-
-      .architecture-panel.active {
-        grid-template-columns: 1fr;
-      }
-
-      .architecture-notes {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: none;
-      }
-
-      .architecture-note {
-        border-right: 1px solid var(--line-strong);
-      }
-
-      .data-grid,
-      .roadmap,
-      .outcomes {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .retrieval {
-        grid-template-columns: 1fr;
-      }
+      .nav { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .document-visual { width: min(590px, 100%); }
+      .section-heading, .core-value { grid-template-columns: 1fr; gap: 26px; }
+      .record-grid { grid-template-columns: repeat(3, 1fr); }
+      .impact { grid-template-columns: repeat(2, 1fr); }
+      .runtime-panel.active { grid-template-columns: 1fr; }
+      .runtime-notes { grid-template-columns: repeat(3, 1fr); grid-template-rows: none; }
+      .runtime-note { border-right: 1px solid var(--line-dark); }
     }
 
     @media (max-width: 720px) {
-      .topbar {
-        height: 58px;
-        padding: 0 18px;
-      }
-
-      .brand small {
-        display: none;
-      }
-
-      .hero {
-        min-height: 0;
-        width: calc(100% - 36px);
-        gap: 50px;
-        padding: 58px 0 78px;
-      }
-
-      h1 {
-        font-size: 58px;
-      }
-
-      h1 span {
-        font-size: 21px;
-      }
-
-      .hero-copy > p:not(.eyebrow) {
-        font-size: 16px;
-      }
-
-      .hero-actions .button {
-        flex: 1 1 100%;
-      }
-
-      .hero-visual {
-        min-height: 440px;
-      }
-
-      .memory-sheet {
-        width: calc(100% - 18px);
-        padding: 21px;
-      }
-
-      .version-rail {
-        right: 0;
-      }
-
-      .section {
-        padding: 76px 18px;
-        scroll-margin-top: 58px;
-      }
-
-      .section-heading {
-        margin-bottom: 40px;
-      }
-
-      .principles,
-      .lifecycle,
-      .data-grid,
-      .roadmap,
-      .outcomes,
-      .impact-compare {
-        grid-template-columns: 1fr;
-      }
-
-      .impact-path:first-child {
-        border-right: 0;
-        border-bottom: 1px solid var(--line-strong);
-      }
-
-      .principle {
-        min-height: 0;
-        border-right: 0;
-        border-bottom: 1px solid var(--line-strong);
-      }
-
-      .principle:last-child {
-        border-bottom: 0;
-      }
-
-      .principle-num {
-        margin-bottom: 24px;
-      }
-
-      .architecture-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .segmented,
-      .segment {
-        width: 100%;
-        min-width: 0;
-      }
-
-      .diagram {
-        min-height: 0;
-        grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 18px;
-      }
-
-      .arrow {
-        transform: rotate(90deg);
-      }
-
-      .architecture-notes {
-        grid-template-columns: 1fr;
-      }
-
-      .architecture-note {
-        border-right: 0;
-      }
-
-      .stage {
-        min-height: 0;
-        border-right: 1px solid #69808a;
-        border-bottom: 0;
-      }
-
-      .stage:last-child {
-        border-bottom: 1px solid #69808a;
-      }
-
-      .stage:not(:last-child)::after {
-        top: auto;
-        right: 28px;
-        bottom: -9px;
-        transform: rotate(135deg);
-      }
-
-      .stage h3 {
-        margin-top: 24px;
-      }
-
-      .score-visual {
-        padding: 22px 16px;
-      }
-
-      .score-line {
-        grid-template-columns: 66px 1fr 38px;
-        gap: 9px;
-      }
-
-      .cli-tabs {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .cli-tab {
-        border-bottom: 1px solid #516871;
-      }
-
-      .cli-body {
-        min-height: 300px;
-        padding: 72px 18px 25px;
-      }
-
-      footer {
-        grid-template-columns: 1fr;
-        align-items: start;
-        padding: 50px 18px;
-      }
+      .topbar { height: 58px; padding: 0 18px; }
+      .brand small { display: none; }
+      .hero { min-height: 0; width: calc(100% - 36px); gap: 48px; padding: 58px 0 76px; }
+      h1 { font-size: 54px; }
+      .hero-lede { font-size: 16px; }
+      .hero-actions .button { flex: 1 1 100%; }
+      .document-visual { min-height: 560px; }
+      .document-card { width: calc(100% - 16px); padding: 20px; }
+      .source-tab { right: 0; }
+      .section { padding: 76px 18px; scroll-margin-top: 58px; }
+      .section-heading { margin-bottom: 40px; }
+      .definition, .levels, .record-grid, .flow, .impact { grid-template-columns: 1fr; }
+      .formula-card { min-height: 280px; padding: 28px; }
+      .flow-step { min-height: 0; border-right: 1px solid #5c7073; border-bottom: 0; }
+      .flow-step:last-child { border-bottom: 1px solid #5c7073; }
+      .flow-step:not(:last-child)::after { top: auto; right: 28px; bottom: -8px; transform: rotate(135deg); }
+      .flow-step h3 { margin-top: 26px; }
+      .runtime-toolbar { align-items: stretch; flex-direction: column; }
+      .segmented, .segment { width: 100%; min-width: 0; }
+      .runtime-diagram { grid-template-columns: 1fr; gap: 11px; padding: 18px; }
+      .arrow { transform: rotate(90deg); }
+      .runtime-notes { grid-template-columns: 1fr; }
+      .runtime-note { border-right: 0; }
+      .cli-tabs { display: grid; grid-template-columns: repeat(2, 1fr); }
+      .cli-tab { border-bottom: 1px solid #546b70; }
+      .cli-body { min-height: 285px; padding: 70px 18px 24px; }
+      footer { grid-template-columns: 1fr; align-items: start; padding: 50px 18px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-      }
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
     }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
-
   <header class="topbar">
-    <a class="brand" href="#top" aria-label="Back to the AI Doc overview">
-      <span class="brand-mark">AD</span>
-      <span>AI Doc <small>/ PROJECT OVERVIEW</small></span>
-    </a>
+    <a class="brand" href="#top" aria-label="Back to AI Doc overview"><span class="brand-mark">AD</span><span>AI Doc <small>/ VERIFIABLE PROJECT KNOWLEDGE</small></span></a>
     <nav class="nav" aria-label="Page navigation">
-      <a href="#principles">Principles</a>
-      <a href="#impact">Agent impact</a>
-      <a href="#architecture">Architecture</a>
-      <a href="#workflow">Workflow</a>
-      <a href="#model">Data model</a>
-      <a href="#cli">CLI</a>
-      <a href="#roadmap">Roadmap</a>
+      <a href="#essence">Document</a><a href="#value">Core value</a><a href="#record">Anatomy</a><a href="#lifecycle">Lifecycle</a><a href="#impact">Agent impact</a><a href="#runtime">Runtime</a><a href="#cli">CLI</a>
     </nav>
   </header>
 
   <main id="main">
     <section class="hero" id="top">
-      <div class="hero-copy">
-        <p class="eyebrow">Engineering memory for AI agents</p>
-        <h1>AI Doc<span>Turn every code insight into a head start for the next task.</span></h1>
-        <p>Long-term project memory for AI agents. AI Doc connects features, APIs, and design decisions to exact commits and code locations, preserving verifiable, searchable, and evolving engineering knowledge across sessions.</p>
-        <div class="hero-actions">
-          <a class="button" href="#architecture">Explore the architecture <span aria-hidden="true">↓</span></a>
-          <a class="button secondary" href="#cli">Browse CLI capabilities</a>
-        </div>
+      <div>
+        <p class="eyebrow">What survives the session</p>
+        <h1>A document is not a file. It is <em>understanding that can travel.</em></h1>
+        <p class="hero-lede">AI Doc turns verified code understanding into durable project knowledge: scoped, attributable, versioned, and always connected back to source evidence.</p>
+        <div class="hero-actions"><a class="button" href="#essence">Define the document <span aria-hidden="true">↓</span></a><a class="button secondary" href="#value">See AI Doc's value</a></div>
       </div>
-
-      <div class="hero-visual" aria-label="Example of a traceable AI Doc memory">
-        <article class="memory-sheet">
-          <div class="sheet-head">
-            <strong>MEMORY / FEATURE</strong>
-            <span class="status">ACTIVE</span>
-          </div>
-          <h2 class="memory-title">Project engineering memory</h2>
-          <p>Preserve responsibilities, contracts, and implementation evidence instead of an unverifiable session summary.</p>
-          <div class="trace">
-            <i aria-hidden="true"></i>
-            <span>src/AiDoc.Cli/Application/<br><strong>MemoryService.cs</strong></span>
-            <code>L20–84</code>
-          </div>
-          <div class="trace">
-            <i aria-hidden="true"></i>
-            <span>symbol<br><strong>MemoryService.Search</strong></span>
-            <code>commit</code>
-          </div>
-          <div class="trace">
-            <i aria-hidden="true"></i>
-            <span>evidence<br><strong>FTS5 + Embedding</strong></span>
-            <code>0.86</code>
-          </div>
+      <div class="document-visual" aria-label="Anatomy of a verifiable document">
+        <article class="document-card">
+          <header><strong>KNOWLEDGE RECORD / API</strong><span class="verified">VERIFIED</span></header>
+          <p class="claim">Order submission validates inventory before creating the transaction.</p>
+          <div class="anatomy-row"><span>CONTEXT</span><strong>orders-api · main · current contract</strong></div>
+          <div class="anatomy-row"><span>EVIDENCE</span><strong>OrderService.SubmitAsync · L42–86</strong></div>
+          <div class="anatomy-row"><span>IDENTITY</span><strong>memory 9f2… · version 4</strong></div>
+          <div class="anatomy-row"><span>HISTORY</span><strong>revised after inventory validation change</strong></div>
         </article>
-        <div class="version-rail">
-          <span>IMMUTABLE</span>
-          <strong>V.07</strong>
-          <span>history kept</span>
+        <div class="source-tab">SOURCE OF TRUTH<strong>CODE</strong>commit a81d…</div>
+      </div>
+    </section>
+
+    <section class="section white" id="essence">
+      <div class="section-heading"><div><p class="eyebrow">The essence of a document</p><h2>Content becomes a document when it can be trusted across time.</h2></div><p>A document is a bounded cognitive snapshot. It carries not only what is known, but where that knowledge applies, what supports it, who or what produced it, and how it has changed.</p></div>
+      <div class="definition">
+        <article class="formula-card"><code>DOCUMENT =</code><p>Content + Context<br>+ Evidence + Identity<br>+ <strong>History</strong></p></article>
+        <aside class="definition-note"><code>IMPORTANT DISTINCTION</code><blockquote>Text communicates. A document remains addressable, interpretable, and accountable after its author is gone.</blockquote></aside>
+      </div>
+      <div class="levels">
+        <article class="level"><code>01 / TEXT</code><h3>Says something</h3><p>Useful language, but no durable boundary, provenance, or lifecycle.</p></article>
+        <article class="level"><code>02 / DATA</code><h3>Structures something</h3><p>Machine-readable fields, but structure alone does not establish trust.</p></article>
+        <article class="level"><code>03 / DOCUMENT</code><h3>Can be relied upon</h3><p>A named, scoped, evidenced, and versioned assertion that others can inspect.</p></article>
+      </div>
+    </section>
+
+    <section class="section dark" id="value">
+      <div class="section-heading"><div><p class="eyebrow">AI Doc's core value</p><h2>Verified understanding that survives the session.</h2></div><p>AI Doc is not a chat archive and not another folder of prose. It is a version ledger for project understanding, designed so the next agent can inherit what was learned without inheriting blind trust.</p></div>
+      <div class="core-value">
+        <div class="ledger-statement"><p>Code stays the source of truth. AI Doc preserves the <strong>verified interpretation</strong> needed to act on it.</p></div>
+        <div class="value-list">
+          <article class="value-item"><span>01</span><div><h3>Carry understanding forward</h3><p>Turn analysis that would disappear with a context window into durable project knowledge.</p></div></article>
+          <article class="value-item"><span>02</span><div><h3>Keep trust inspectable</h3><p>Every code-related conclusion can point back to a repository, commit, file, symbol, and line range.</p></div></article>
+          <article class="value-item"><span>03</span><div><h3>Preserve change, not just state</h3><p>Append immutable revisions so an agent can see how understanding evolved and why.</p></div></article>
+          <article class="value-item"><span>04</span><div><h3>Retrieve only what the task needs</h3><p>Use exact terms and semantic intent to recover focused context instead of rereading the repository.</p></div></article>
         </div>
       </div>
     </section>
 
-    <section class="section white" id="principles">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Why it exists</p>
-          <h2>Not more context.<br>More trustworthy context.</h2>
-        </div>
-        <p>The problem is rarely that an agent cannot read the code. It is that every session must rediscover the same project facts. AI Doc preserves verified understanding together with its chain of evidence back to the source.</p>
-      </div>
-
-      <div class="principles">
-        <article class="principle">
-          <span class="principle-num">01 / TRACE</span>
-          <h3>Every conclusion is traceable</h3>
-          <p>Memories link to a project, Git commit, file, symbol, and line range. Agents can verify the source instead of blindly trusting generated text.</p>
-        </article>
-        <article class="principle">
-          <span class="principle-num">02 / VERSION</span>
-          <h3>Append changes, preserve history</h3>
-          <p>Each revision creates a new immutable version. Design changes and API evolution remain visible, and earlier decisions never disappear behind an update.</p>
-        </article>
-        <article class="principle">
-          <span class="principle-num">03 / RETRIEVE</span>
-          <h3>Exact terms meet semantics</h3>
-          <p>FTS5 captures paths, symbols, and code terms. Local embeddings capture natural-language meaning. Both signals contribute to ranking.</p>
-        </article>
+    <section class="section" id="record">
+      <div class="section-heading"><div><p class="eyebrow">Project knowledge record</p><h2>Five parts make understanding reusable.</h2></div><p>The useful unit is not a page. It is a claim package: a conclusion with an explicit scope, supporting evidence, provenance, and an append-only history.</p></div>
+      <div class="record-grid">
+        <article class="record-part"><code>01 / CLAIM</code><h3>What is understood</h3><p>A concise assertion about a feature, API, behavior, or design decision.</p></article>
+        <article class="record-part"><code>02 / SCOPE</code><h3>Where it applies</h3><p>The owning project, version, branch, module, and relevant constraints.</p></article>
+        <article class="record-part"><code>03 / EVIDENCE</code><h3>Why it is credible</h3><p>Concrete code locations and Git context that let another agent verify it.</p></article>
+        <article class="record-part"><code>04 / PROVENANCE</code><h3>How it came to be</h3><p>The author or agent, creation time, and basis of the interpretation.</p></article>
+        <article class="record-part"><code>05 / HISTORY</code><h3>How it evolved</h3><p>Immutable revisions that retain earlier understanding instead of overwriting it.</p></article>
       </div>
     </section>
 
-    <section class="section" id="impact">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Agent outcomes</p>
-          <h2>Less rediscovery.<br>More forward progress.</h2>
-        </div>
-        <p>AI Doc changes how an agent begins a task. Instead of rebuilding project understanding from raw files every time, it starts with scoped, versioned knowledge and follows the evidence only where deeper verification is needed.</p>
-      </div>
-
-      <div class="impact-compare" aria-label="Agent workflow before and after adopting AI Doc">
-        <article class="impact-path">
-          <span class="impact-label">WITHOUT AI DOC / EVERY SESSION</span>
-          <ol class="impact-steps">
-            <li><div><strong>Search broadly</strong><p>Scan files, docs, and symbols to reconstruct the project model.</p></div></li>
-            <li><div><strong>Repeat old reasoning</strong><p>Rediscover decisions and dependencies already understood before.</p></div></li>
-            <li><div><strong>Trust transient context</strong><p>Lose useful findings when the session ends or the context window turns over.</p></div></li>
-          </ol>
-        </article>
-        <article class="impact-path with-aidoc">
-          <span class="impact-label">WITH AI DOC / TASK START</span>
-          <ol class="impact-steps">
-            <li><div><strong>Retrieve the relevant memory</strong><p>Search by intent, API term, path, or symbol within an explicit project scope.</p></div></li>
-            <li><div><strong>Verify the evidence</strong><p>Follow exact code references and Git context instead of accepting an unsupported summary.</p></div></li>
-            <li><div><strong>Continue from prior work</strong><p>Use immutable history to understand what changed, then append the newly verified state.</p></div></li>
-          </ol>
-        </article>
-      </div>
-
-      <div class="outcomes">
-        <article class="outcome"><code>01 / FOCUS</code><h3>Smaller context footprint</h3><p>Load a focused memory first, then read only the source files needed to verify or modify the behavior.</p></article>
-        <article class="outcome"><code>02 / SPEED</code><h3>Less repeated exploration</h3><p>Reuse previously verified architecture, contracts, and implementation locations across sessions.</p></article>
-        <article class="outcome"><code>03 / SAFETY</code><h3>More defensible changes</h3><p>Ground plans and edits in code references, commit context, and append-only version history.</p></article>
-        <article class="outcome"><code>04 / CONTINUITY</code><h3>Durable agent handoffs</h3><p>Leave structured project knowledge for the next agent or session instead of a disposable chat transcript.</p></article>
+    <section class="section dark" id="lifecycle">
+      <div class="section-heading"><div><p class="eyebrow">Knowledge lifecycle</p><h2>From code fact to the next verified action.</h2></div><p>AI Doc closes a loop: understand the code, verify the claim, preserve it with evidence, retrieve it by task intent, and revalidate it when the project changes.</p></div>
+      <div class="flow">
+        <article class="flow-step"><code>STEP 01</code><h3>Understand</h3><p>An agent identifies a behavior, contract, or decision in the repository.</p></article>
+        <article class="flow-step"><code>STEP 02</code><h3>Verify</h3><p>File, symbol, line, project boundary, and Git state are checked.</p></article>
+        <article class="flow-step"><code>STEP 03</code><h3>Preserve</h3><p>The claim and evidence become an immutable knowledge version.</p></article>
+        <article class="flow-step"><code>STEP 04</code><h3>Retrieve</h3><p>Keyword and semantic search recover the smallest relevant context.</p></article>
+        <article class="flow-step"><code>STEP 05</code><h3>Revalidate</h3><p>The next agent follows the evidence, acts, and appends the new verified state.</p></article>
       </div>
     </section>
 
-    <section class="section" id="architecture">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">System architecture</p>
-          <h2>One core.<br>Two operating models.</h2>
-        </div>
-        <p>The current implementation is a service-free standalone CLI. The Cloud edition is a planned deployment model for team-wide access. Both follow the same memory, versioning, and hybrid retrieval principles within different deployment boundaries.</p>
-      </div>
-
-      <div class="architecture-toolbar">
-        <div class="segmented" role="tablist" aria-label="Select an architecture model">
-          <button class="segment active" type="button" role="tab" aria-selected="true" aria-controls="architecture-local" data-architecture="local">Standalone CLI · Shipped</button>
-          <button class="segment" type="button" role="tab" aria-selected="false" aria-controls="architecture-cloud" data-architecture="cloud">Cloud edition · Planned</button>
-        </div>
-        <span class="architecture-state" id="architecture-state">LOCAL / NO DAEMON / V0.1.0</span>
-      </div>
-
-      <div class="architecture-panel active" id="architecture-local" role="tabpanel">
-        <div class="diagram" aria-label="Standalone CLI architecture diagram">
-          <div class="diagram-column">
-            <div class="node primary"><strong>Agent / User / Script</strong><small>argv · stdin · JSON</small></div>
-          </div>
-          <div class="arrow" aria-hidden="true">→</div>
-          <div class="diagram-column">
-            <div class="node primary"><strong>aidoc CLI</strong><small>short-lived process</small></div>
-            <div class="node"><strong>Application Services</strong><small>project · memory · maintenance</small></div>
-            <div class="node"><strong>Git + Embedding</strong><small>git CLI · ONNX Runtime</small></div>
-          </div>
-          <div class="arrow" aria-hidden="true">→</div>
-          <div class="diagram-column">
-            <div class="node storage"><strong>SQLite + FTS5</strong><small>single source of truth</small></div>
-            <div class="node"><strong>Local Git repository</strong><small>commits and code references</small></div>
-            <div class="node"><strong>multilingual-e5-small</strong><small>384-dimensional local vectors</small></div>
-          </div>
-        </div>
-        <aside class="architecture-notes" aria-label="Standalone architecture characteristics">
-          <div class="architecture-note"><strong>No resident service</strong><p>Each command starts, runs, and exits. There is no background daemon.</p></div>
-          <div class="architecture-note"><strong>Local first</strong><p>Data, full-text indexes, and embeddings remain on the user's machine.</p></div>
-          <div class="architecture-note"><strong>Single-file delivery</strong><p>A self-contained .NET 10 build requires no runtime on the target machine.</p></div>
-        </aside>
-      </div>
-
-      <div class="architecture-panel" id="architecture-cloud" role="tabpanel" hidden>
-        <div class="diagram" aria-label="Cloud edition architecture diagram">
-          <div class="diagram-column">
-            <div class="node primary"><strong>Agent / MCP Client</strong><small>HTTPS + API Key</small></div>
-          </div>
-          <div class="arrow" aria-hidden="true">→</div>
-          <div class="diagram-column">
-            <div class="node cloud"><strong>Managed container platform</strong><small>HTTP API + MCP Server</small></div>
-            <div class="node"><strong>Memory + Search</strong><small>shared application layer</small></div>
-            <div class="node"><strong>Managed Identity</strong><small>service-to-service access</small></div>
-          </div>
-          <div class="arrow" aria-hidden="true">→</div>
-          <div class="diagram-column">
-            <div class="node storage"><strong>PostgreSQL</strong><small>pgvector + pg_trgm</small></div>
-            <div class="node cloud"><strong>Embedding service</strong><small>hosted model inference</small></div>
-            <div class="node"><strong>ACR + Log Analytics</strong><small>images and logs</small></div>
-          </div>
-        </div>
-        <aside class="architecture-notes" aria-label="Cloud architecture characteristics">
-          <div class="architecture-note"><strong>Shared by the team</strong><p>Multiple machines access the same project memory through HTTP and MCP.</p></div>
-          <div class="architecture-note"><strong>Minimal service set</strong><p>One container and one database, with no premature microservice split.</p></div>
-          <div class="architecture-note"><strong>Scale on demand</strong><p>Add queues and search services only when capacity or SLA pressure is measurable.</p></div>
-        </aside>
+    <section class="section white" id="impact">
+      <div class="section-heading"><div><p class="eyebrow">What changes for an agent</p><h2>Less reconstruction. More accountable progress.</h2></div><p>The agent does not skip verification. It starts from a stronger position: prior understanding is discoverable, bounded, and connected to the exact source that must be checked.</p></div>
+      <div class="impact">
+        <article class="impact-card"><code>01 / FOCUS</code><h3>Smaller context footprint</h3><p>Load a focused record first, then inspect only the source needed for the task.</p></article>
+        <article class="impact-card"><code>02 / SPEED</code><h3>Less repeated discovery</h3><p>Reuse verified architecture, contracts, and implementation locations across sessions.</p></article>
+        <article class="impact-card"><code>03 / SAFETY</code><h3>Defensible changes</h3><p>Ground plans and edits in evidence and preserve why the understanding changed.</p></article>
+        <article class="impact-card"><code>04 / CONTINUITY</code><h3>Durable handoffs</h3><p>Transfer project knowledge between agents without reducing it to a chat transcript.</p></article>
       </div>
     </section>
 
-    <section class="section dark" id="workflow">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Memory lifecycle</p>
-          <h2>From source facts<br>to the next action.</h2>
-        </div>
-        <p>Writing is not the finish line. A memory is validated, versioned, indexed, and retrieved, then verified by an agent through its code references before the next change.</p>
+    <section class="section" id="runtime">
+      <div class="section-heading"><div><p class="eyebrow">Operating models</p><h2>One knowledge contract. Two deployment boundaries.</h2></div><p>The shipped standalone CLI keeps everything local. The planned Cloud edition exposes the same document contract to teams through shared APIs and MCP.</p></div>
+      <div class="runtime-toolbar">
+        <div class="segmented" role="tablist" aria-label="Select an operating model"><button class="segment active" type="button" role="tab" aria-selected="true" data-runtime="local">Standalone · Shipped</button><button class="segment" type="button" role="tab" aria-selected="false" data-runtime="cloud">Cloud · Planned</button></div>
+        <span class="runtime-state">LOCAL / NO DAEMON / V0.1.0</span>
       </div>
-
-      <div class="lifecycle">
-        <article class="stage"><span class="stage-index">STEP 01</span><h3>Analyze</h3><p>The agent understands a feature, API, or design decision.</p></article>
-        <article class="stage"><span class="stage-index">STEP 02</span><h3>Validate</h3><p>Check project boundaries, files, symbols, and Git state.</p></article>
-        <article class="stage"><span class="stage-index">STEP 03</span><h3>Version</h3><p>Create a memory or append a new immutable version.</p></article>
-        <article class="stage"><span class="stage-index">STEP 04</span><h3>Index</h3><p>Update the FTS5 document and generate a local vector.</p></article>
-        <article class="stage"><span class="stage-index">STEP 05</span><h3>Reuse</h3><p>Retrieve across sessions and follow references to the implementation.</p></article>
+      <div class="runtime-panel active" id="runtime-local" role="tabpanel">
+        <div class="runtime-diagram"><div class="runtime-column"><div class="node primary"><strong>Agent / User / Script</strong><small>argv · stdin · JSON</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node primary"><strong>aidoc CLI</strong><small>short-lived process</small></div><div class="node"><strong>Application services</strong><small>project · memory · maintenance</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node storage"><strong>SQLite + FTS5</strong><small>authoritative local store</small></div><div class="node"><strong>Git + local embedding</strong><small>evidence and retrieval</small></div></div></div>
+        <aside class="runtime-notes"><div class="runtime-note"><strong>No resident service</strong><p>Each command starts, runs, and exits.</p></div><div class="runtime-note"><strong>Local first</strong><p>Knowledge and vectors stay on the machine.</p></div><div class="runtime-note"><strong>Portable</strong><p>A self-contained Windows executable.</p></div></aside>
       </div>
-
-      <div class="retrieval">
-        <div class="score-visual" aria-label="Hybrid retrieval weighting diagram">
-          <div class="score-line"><span>KEYWORD</span><div class="score-track"><span class="score-fill" style="width: 40%"></span></div><strong>40%</strong></div>
-          <div class="score-line"><span>SEMANTIC</span><div class="score-track"><span class="score-fill semantic" style="width: 60%"></span></div><strong>60%</strong></div>
-          <div class="score-line"><span>RESULT</span><div class="score-track"><span class="score-fill" style="width: 86%; background: #e2533f"></span></div><strong>0.86</strong></div>
-        </div>
-        <div class="retrieval-copy">
-          <p class="eyebrow">Hybrid retrieval</p>
-          <p class="formula"><strong>score =</strong><br>0.4 × keyword<br>+ 0.6 × vector</p>
-          <p>When no vector is available, retrieval automatically falls back to keywords. An embedding failure never blocks a write.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="section white" id="model">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Data model</p>
-          <h2>Minimal entities.<br>A complete evidence chain.</h2>
-        </div>
-        <p>SQLite provides authoritative storage and full-text indexing. Projects define isolation, memories have stable identities, versions are append-only, and code references connect natural-language conclusions to exact implementations.</p>
-      </div>
-
-      <div class="data-grid">
-        <article class="data-entity"><code>01 / projects</code><h3>Project boundary</h3><ul class="field-list"><li>id · stable UUID</li><li>name · local unique</li><li>repository_path</li><li>remote_url</li></ul></article>
-        <article class="data-entity"><code>02 / memories</code><h3>Memory identity</h3><ul class="field-list"><li>project_id</li><li>type · feature/api/decision</li><li>title</li><li>current_version</li></ul></article>
-        <article class="data-entity"><code>03 / memory_versions</code><h3>Immutable version</h3><ul class="field-list"><li>summary · details_json</li><li>commit_sha</li><li>embedding · model</li><li>created_by · created_at</li></ul></article>
-        <article class="data-entity"><code>04 / code_reference</code><h3>Source evidence</h3><ul class="field-list"><li>relative path</li><li>symbol</li><li>start_line · end_line</li><li>exists · working tree</li></ul></article>
+      <div class="runtime-panel" id="runtime-cloud" role="tabpanel" hidden>
+        <div class="runtime-diagram"><div class="runtime-column"><div class="node primary"><strong>Agent / MCP client</strong><small>authenticated remote access</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node primary"><strong>API + MCP server</strong><small>shared document contract</small></div><div class="node"><strong>Memory + search</strong><small>shared application layer</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node storage"><strong>Relational + vector store</strong><small>versions and retrieval</small></div><div class="node"><strong>Embedding service</strong><small>hosted semantic indexing</small></div></div></div>
+        <aside class="runtime-notes"><div class="runtime-note"><strong>Team shared</strong><p>One knowledge base across machines.</p></div><div class="runtime-note"><strong>Same semantics</strong><p>Claims, evidence, and history remain intact.</p></div><div class="runtime-note"><strong>Scale on demand</strong><p>Add services only when usage requires them.</p></div></aside>
       </div>
     </section>
 
     <section class="section dark" id="cli">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Implemented CLI</p>
-          <h2>One command.<br>One memory operation.</h2>
-        </div>
-        <p>Agent calls select the project scope explicitly and use machine-readable output. Standard output contains only the final result; failures are identified by exit code and a stable error.code.<br><a class="reference-link" href="command-line-reference.md">Open the full parameter reference →</a></p>
-      </div>
-
+      <div class="section-heading"><div><p class="eyebrow">Implemented interface</p><h2>Knowledge operations made explicit.</h2></div><p>The CLI makes the lifecycle machine-readable: report a verified record, revise it without losing history, search within an explicit project scope, and follow evidence back to code.<br><a class="reference-link" href="command-line-reference.md">Open the full command-line reference →</a></p></div>
       <div class="cli-shell">
         <div class="cli-head"><span>AIDOC / POWERSHELL</span><span>schemaVersion: 1</span></div>
-        <div class="cli-tabs" role="tablist" aria-label="CLI examples">
-          <button class="cli-tab active" type="button" role="tab" aria-selected="true" data-cli="report">Report memory</button>
-          <button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="search">Hybrid search</button>
-          <button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="history">View history</button>
-          <button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="doctor">Run checks</button>
-        </div>
+        <div class="cli-tabs" role="tablist" aria-label="CLI examples"><button class="cli-tab active" type="button" role="tab" aria-selected="true" data-cli="report">Report</button><button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="search">Retrieve</button><button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="history">History</button><button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="doctor">Verify store</button></div>
         <div class="cli-body">
           <button class="copy-button" type="button" aria-label="Copy current command" title="Copy current command">Copy</button>
-          <pre class="cli-example active" id="cli-report" data-command="aidoc memory report --project my-api --file memory.json --format json"><span class="prompt">PS&gt;</span> aidoc memory report \
+          <pre class="cli-example active" id="cli-report" data-command="aidoc memory report --project my-api --file knowledge.json --format json"><span class="prompt">PS&gt;</span> aidoc memory report \
   <span class="argument">--project my-api</span> \
-  --file memory.json \
-  --format json
+  --file knowledge.json --format json
 
 { "schemaVersion": 1, "data": { "version": 1 } }</pre>
-          <pre class="cli-example" id="cli-search" data-command="aidoc search &quot;How is authentication implemented?&quot; --project my-api --limit 5 --format json"><span class="prompt">PS&gt;</span> aidoc search <span class="argument">"How is authentication implemented?"</span> \
-  --project my-api \
-  --limit 5 \
-  --format json</pre>
+          <pre class="cli-example" id="cli-search" data-command="aidoc search &quot;Where is inventory validated?&quot; --project my-api --limit 5 --format json"><span class="prompt">PS&gt;</span> aidoc search \
+  <span class="argument">"Where is inventory validated?"</span> \
+  --project my-api --limit 5 --format json</pre>
           <pre class="cli-example" id="cli-history" data-command="aidoc memory history &lt;memory-id&gt; --format json"><span class="prompt">PS&gt;</span> aidoc memory history \
-  <span class="argument">&lt;memory-id&gt;</span> \
-  --format json</pre>
+  <span class="argument">&lt;memory-id&gt;</span> --format json</pre>
           <pre class="cli-example" id="cli-doctor" data-command="aidoc doctor --format json"><span class="prompt">PS&gt;</span> aidoc doctor --format json
 
-<span class="prompt">PS&gt;</span> aidoc backup --format json</pre>
+{ "schemaVersion": 1, "data": { "integrityCheckPassed": true } }</pre>
         </div>
-      </div>
-    </section>
-
-    <section class="section" id="roadmap">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Delivery path</p>
-          <h2>Close the loop.<br>Then expand the boundary.</h2>
-        </div>
-        <p>Complexity is introduced only when real needs demand it: first complete local reporting, revision, retrieval, and maintenance, then add remote sharing, change awareness, and quality governance.</p>
-      </div>
-
-      <div class="roadmap">
-        <article class="roadmap-item current"><span class="current-label">CURRENT</span><h3>Local closed loop</h3><p>Project isolation, immutable memories, code references, FTS5 + local embeddings, backups, and health checks.</p></article>
-        <article class="roadmap-item"><h3>Team sharing</h3><p>HTTP API, MCP Server, PostgreSQL, and a managed cloud deployment.</p></article>
-        <article class="roadmap-item"><h3>Change awareness</h3><p>Watch commits and pull requests, identify affected memories, and mark them for review or as stale.</p></article>
-        <article class="roadmap-item"><h3>Quality governance</h3><p>Conflict resolution, feedback learning, project permissions, auditing, and retrieval quality metrics.</p></article>
       </div>
     </section>
   </main>
 
-  <footer>
-    <div>
-      <strong>AI Doc</strong>
-      <p>Memory is a versioned project fact with a source, not an unsupported conversation summary.</p>
-    </div>
-    <code>LOCAL-FIRST / TRACEABLE / AGENT-READY</code>
-  </footer>
+  <footer><div><strong>AI Doc</strong><p>Code is the source of truth. AI Doc is the durable, inspectable record of what has been verified about it.</p></div><code>CLAIM · CONTEXT · EVIDENCE · IDENTITY · HISTORY</code></footer>
 
   <script>
-    const architectureTabs = document.querySelectorAll('[data-architecture]');
-    const architecturePanels = document.querySelectorAll('.architecture-panel');
-    const architectureState = document.querySelector('#architecture-state');
-
-    architectureTabs.forEach((tab) => {
+    const runtimeTabs = document.querySelectorAll('[data-runtime]');
+    const runtimePanels = document.querySelectorAll('.runtime-panel');
+    const runtimeState = document.querySelector('.runtime-state');
+    runtimeTabs.forEach((tab) => {
       tab.addEventListener('click', () => {
-        const selected = tab.dataset.architecture;
-        architectureTabs.forEach((item) => {
-          const active = item === tab;
-          item.classList.toggle('active', active);
-          item.setAttribute('aria-selected', String(active));
-        });
-        architecturePanels.forEach((panel) => {
-          const active = panel.id === `architecture-${selected}`;
-          panel.classList.toggle('active', active);
-          panel.hidden = !active;
-        });
-        architectureState.textContent = selected === 'local'
-          ? 'LOCAL / NO DAEMON / V0.1.0'
-          : 'CLOUD / SHARED / PLANNED';
+        const selected = tab.dataset.runtime;
+        runtimeTabs.forEach((item) => { const active = item === tab; item.classList.toggle('active', active); item.setAttribute('aria-selected', String(active)); });
+        runtimePanels.forEach((panel) => { const active = panel.id === `runtime-${selected}`; panel.classList.toggle('active', active); panel.hidden = !active; });
+        runtimeState.textContent = selected === 'local' ? 'LOCAL / NO DAEMON / V0.1.0' : 'CLOUD / SHARED / PLANNED';
       });
     });
 
     const cliTabs = document.querySelectorAll('[data-cli]');
     const cliExamples = document.querySelectorAll('.cli-example');
     const copyButton = document.querySelector('.copy-button');
-
     cliTabs.forEach((tab) => {
       tab.addEventListener('click', () => {
-        cliTabs.forEach((item) => {
-          const active = item === tab;
-          item.classList.toggle('active', active);
-          item.setAttribute('aria-selected', String(active));
-        });
-        cliExamples.forEach((example) => {
-          example.classList.toggle('active', example.id === `cli-${tab.dataset.cli}`);
-        });
+        cliTabs.forEach((item) => { const active = item === tab; item.classList.toggle('active', active); item.setAttribute('aria-selected', String(active)); });
+        cliExamples.forEach((example) => example.classList.toggle('active', example.id === `cli-${tab.dataset.cli}`));
         copyButton.textContent = 'Copy';
       });
     });
 
     copyButton.addEventListener('click', async () => {
       const command = document.querySelector('.cli-example.active').dataset.command;
-      try {
-        await navigator.clipboard.writeText(command);
-        copyButton.textContent = 'Done';
-      } catch {
-        copyButton.textContent = 'Failed';
-      }
+      try { await navigator.clipboard.writeText(command); copyButton.textContent = 'Done'; }
+      catch { copyButton.textContent = 'Failed'; }
     });
 
     const navLinks = document.querySelectorAll('.nav a');
-    const sections = [...navLinks]
-      .map((link) => document.querySelector(link.getAttribute('href')))
-      .filter(Boolean);
-
+    const sections = [...navLinks].map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        navLinks.forEach((link) => {
-          link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
-        });
+        navLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`));
       });
     }, { rootMargin: '-25% 0px -65% 0px' });
-
     sections.forEach((section) => observer.observe(section));
   </script>
 </body>
