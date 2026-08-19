@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AiDoc.Cli/AiDoc.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AiDoc.Cli.Tests/AiDoc.Cli.Tests.csproj" />
+  </Folder>
+</Solution>
