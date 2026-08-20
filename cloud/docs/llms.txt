@@ -1,0 +1,19 @@
+# AI Doc
+
+> AI Doc is durable, project-scoped, evidence-backed memory for software agents. PostgreSQL is authoritative, Azure AI Search is a rebuildable semantic projection, and all cloud access uses Microsoft Entra or managed identity rather than access keys.
+
+## Agent Start Here
+
+- [AI Doc for Software Agents](/docs/agent-introduction.md): Product mental model, project and memory entities, agent lifecycle protocol, quality contract, security model, standalone/cloud differences, and current boundaries.
+- [Configure AI Doc MCP Locally in VS Code](/docs/local-vscode-mcp-configuration.md): Entra-authenticated Code MCP setup, token-refreshing stdio launcher, tool discovery, validation, and troubleshooting.
+- [MCP Installation and Agent Usage](/docs/mcp-agent-usage.md): MCP tool semantics, project bootstrap, complete Markdown upload, memory boundaries, search-before-report, and verification.
+
+## Recommended Agent Reading Paths
+
+- New coding agent: AI Doc for Software Agents → Local VS Code MCP → MCP Installation and Agent Usage.
+- Existing Code MCP user: AI Doc for Software Agents → MCP Installation and Agent Usage.
+- Connection troubleshooting: Configure AI Doc MCP Locally in VS Code.
+
+## Optional
+
+- [Documentation Home](/docs/): Human-readable navigation for the same raw Markdown resources.

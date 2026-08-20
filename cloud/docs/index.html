@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Doc knowledge and runbooks for software agents.">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="AI Doc agent documentation index">
+  <title>AI Doc | Agent Knowledge</title>
+  <style>
+    :root {
+      --paper: #f3f1eb;
+      --surface: #fffefa;
+      --ink: #17272b;
+      --muted: #647176;
+      --line: #9eadaa;
+      --teal: #087a72;
+      --teal-dark: #075851;
+      --coral: #db513d;
+      --gold: #e1ad34;
+      --night: #142327;
+      --mono: "Cascadia Code", Consolas, monospace;
+      --sans: "Aptos", "Segoe UI", sans-serif;
+      --display: Georgia, "Times New Roman", serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: linear-gradient(rgba(55, 111, 150, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(55, 111, 150, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+    a { color: inherit; }
+    .topbar {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 12px max(22px, calc((100vw - 1120px) / 2));
+      border-bottom: 1px solid var(--line);
+      background: rgba(243, 241, 235, 0.96);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; text-decoration: none; }
+    .brand-mark { width: 31px; height: 31px; display: grid; place-items: center; color: white; background: var(--teal); font: 700 13px/1 var(--mono); }
+    .machine-link { color: var(--teal-dark); font: 700 12px/1.4 var(--mono); }
+    main { width: min(1120px, calc(100% - 44px)); margin: 0 auto; padding: 68px 0 92px; }
+    .intro { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 64px; align-items: end; padding-bottom: 62px; border-bottom: 1px solid var(--line); }
+    .eyebrow { color: var(--coral); font: 700 11px/1.4 var(--mono); text-transform: uppercase; }
+    h1 { max-width: 760px; margin: 12px 0 20px; font: 500 clamp(48px, 7vw, 86px)/0.98 var(--display); }
+    .lede { max-width: 720px; margin: 0; color: #485a5f; font-size: 18px; }
+    .contract { padding: 24px; border-left: 5px solid var(--teal); background: var(--surface); }
+    .contract strong { display: block; margin-bottom: 9px; font: 700 12px/1.3 var(--mono); }
+    .contract p { margin: 0; color: var(--muted); }
+    section { padding: 62px 0 0; }
+    .section-head { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 48px; margin-bottom: 28px; }
+    h2 { margin: 0; font: 500 40px/1.05 var(--display); }
+    .section-head p { margin: 0; color: var(--muted); }
+    .path { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+    .step { min-height: 220px; padding: 24px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(255, 254, 250, 0.76); }
+    .step code { color: var(--coral); font: 700 11px/1 var(--mono); }
+    .step h3 { margin: 42px 0 10px; font: 500 25px/1.15 var(--display); }
+    .step p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    .step a { color: var(--teal-dark); font: 700 12px/1.4 var(--mono); text-underline-offset: 4px; }
+    .doc-list { border-top: 1px solid var(--line); }
+    .doc-row { display: grid; grid-template-columns: 220px 1fr auto; gap: 26px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .doc-row code { color: var(--coral); font: 700 11px/1.4 var(--mono); }
+    .doc-row h3 { margin: 0 0 5px; font-size: 17px; }
+    .doc-row p { margin: 0; color: var(--muted); font-size: 14px; }
+    .doc-row a { color: var(--teal-dark); font: 700 12px/1.4 var(--mono); text-underline-offset: 4px; white-space: nowrap; }
+    footer { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    @media (max-width: 800px) {
+      .intro, .section-head { grid-template-columns: 1fr; gap: 26px; }
+      .path { grid-template-columns: 1fr; }
+      .doc-row { grid-template-columns: 1fr; gap: 8px; }
+      .doc-row a { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/docs/"><span class="brand-mark">AD</span><span>AI Doc / Agent Knowledge</span></a>
+    <a class="machine-link" href="/llms.txt">llms.txt</a>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <span class="eyebrow">Machine-readable project knowledge</span>
+        <h1>Start with the contract. Follow the evidence.</h1>
+        <p class="lede">Raw Markdown documents for agents that need to understand AI Doc, connect through MCP, retrieve project knowledge, and report verified memories.</p>
+      </div>
+      <aside class="contract"><strong>AGENT READING RULE</strong><p>Use the introduction to establish the mental model. Use task-specific runbooks for action. Verify every repository or deployment claim against the linked source and current environment.</p></aside>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Fastest path to useful context.</h2><p>These three documents are enough for a coding agent to understand the product, connect to the shared memory, and operate it correctly.</p></div>
+      <div class="path">
+        <article class="step"><code>01 / UNDERSTAND</code><h3>AI Doc for Agents</h3><p>Memory model, lifecycle, quality contract, security, tools, and current boundaries.</p><a href="/docs/agent-introduction.md">Open Markdown →</a></article>
+        <article class="step"><code>02 / CONNECT</code><h3>Configure Code MCP</h3><p>Entra authentication, local token launcher, Code registration, verification, and repair.</p><a href="/docs/local-vscode-mcp-configuration.md">Open Markdown →</a></article>
+        <article class="step"><code>03 / USE</code><h3>MCP Agent Usage</h3><p>Project discovery, search-before-report, complete Markdown upload, and write verification.</p><a href="/docs/mcp-agent-usage.md">Open Markdown →</a></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>What each article teaches.</h2><p>The public website intentionally contains usage knowledge only. Infrastructure deployment and incident runbooks remain private to the repository and project memory.</p></div>
+      <div class="doc-list">
+        <article class="doc-row"><code>MENTAL MODEL</code><div><h3>AI Doc for Software Agents</h3><p>Explains projects, memories, immutable versions, code references, search, quality, security, and the agent lifecycle.</p></div><a href="/docs/agent-introduction.md">Markdown →</a></article>
+        <article class="doc-row"><code>CONNECT</code><div><h3>Configure Local Code MCP</h3><p>Shows how to obtain Entra tokens safely, install the local bridge, register Code MCP, and verify dynamic tools.</p></div><a href="/docs/local-vscode-mcp-configuration.md">Markdown →</a></article>
+        <article class="doc-row"><code>OPERATE</code><div><h3>MCP Agent Usage</h3><p>Defines tool semantics, project bootstrap, memory boundaries, complete Markdown reporting, and retrieval verification.</p></div><a href="/docs/mcp-agent-usage.md">Markdown →</a></article>
+      </div>
+    </section>
+
+    <footer>Prefer <a href="/llms.txt">/llms.txt</a> for discovery and raw Markdown links for ingestion. The website contains no credentials or deployment-specific tokens.</footer>
+  </main>
+</body>
+</html>

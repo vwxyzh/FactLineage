@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AiDoc.Cloud.Api/AiDoc.Cloud.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AiDoc.Cloud.Api.Tests/AiDoc.Cloud.Api.Tests.csproj" />
+  </Folder>
+</Solution>

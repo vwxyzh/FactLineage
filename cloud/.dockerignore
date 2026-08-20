@@ -1,0 +1,10 @@
+**/bin
+**/obj
+artifacts/
+tests/
+infra/
+.github/
+.git
+.vs
+.vscode
+AiDoc.Cloud.slnx

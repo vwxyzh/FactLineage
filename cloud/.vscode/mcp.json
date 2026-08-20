@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "aidoc-cloud": {
+      "type": "http",
+      "url": "${env:AIDOC_CLOUD_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${env:AIDOC_CLOUD_TOKEN}"
+      }
+    }
+  }
+}

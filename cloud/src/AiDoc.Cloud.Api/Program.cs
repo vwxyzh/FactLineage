@@ -1,0 +1,73 @@
+using Azure.Core;
+using Azure.Identity;
+using AiDoc.Cloud.Api.Api;
+using AiDoc.Cloud.Api.Application;
+using AiDoc.Cloud.Api.Configuration;
+using AiDoc.Cloud.Api.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
+using Npgsql;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+	.AddOptions<CloudOptions>()
+	.Bind(builder.Configuration.GetSection(CloudOptions.SectionName))
+	.ValidateDataAnnotations()
+	.ValidateOnStart();
+builder.Services.AddSingleton<TokenCredential>(services =>
+{
+	var clientId = services.GetRequiredService<IOptions<CloudOptions>>().Value.ManagedIdentityClientId;
+	return new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = clientId });
+});
+builder.Services
+	.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(options =>
+	{
+		var cloud = builder.Configuration.GetSection(CloudOptions.SectionName).Get<CloudOptions>() ?? new CloudOptions();
+		options.Authority = $"https://login.microsoftonline.com/{cloud.TenantId}/v2.0";
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidAudiences = [cloud.ApiAudience, cloud.ApiAudience.Replace("api://", string.Empty, StringComparison.OrdinalIgnoreCase)]
+		};
+	});
+builder.Services.AddAuthorization();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddSingleton<NpgsqlDataSource>(PostgresDataSourceFactory.Create);
+builder.Services.AddSingleton<IMemoryRepository, PostgresMemoryRepository>();
+builder.Services.AddSingleton<IEmbeddingService, AzureOpenAiEmbeddingService>();
+builder.Services.AddSingleton<IMemorySearchIndex, AzureSearchMemoryIndex>();
+builder.Services.AddSingleton<MemoryApplication>();
+builder.Services.AddHostedService<CloudInitializer>();
+builder.Services.AddMcpServer().WithHttpTransport().WithTools<MemoryTools>();
+builder.Services.AddHealthChecks();
+
+var app = builder.Build();
+var documentationContentTypes = new FileExtensionContentTypeProvider();
+documentationContentTypes.Mappings[".md"] = "text/markdown; charset=utf-8";
+documentationContentTypes.Mappings[".txt"] = "text/plain; charset=utf-8";
+
+app.UseExceptionHandler();
+app.UseDefaultFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+	ContentTypeProvider = documentationContentTypes,
+	OnPrepareResponse = context =>
+	{
+		context.Context.Response.Headers.CacheControl = "public, max-age=300";
+		context.Context.Response.Headers.XContentTypeOptions = "nosniff";
+	}
+});
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapGet("/", () => Results.Redirect("/docs/"));
+app.MapHealthChecks("/health");
+app.MapAiDocApi();
+app.MapMcp("/mcp").RequireAuthorization();
+
+app.Run();
+
+public partial class Program;

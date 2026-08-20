@@ -18,7 +18,7 @@
 - 自动监听 GitHub 或 Azure DevOps 变更。
 - 自动判断记忆过期、冲突合并和调用链分析。
 - 多租户计费、复杂 RBAC 和管理后台。
-- 消息队列、异步索引和独立搜索服务。
+- 消息队列和异步索引管道。
 - 私网、WAF、多区域、灾备和自动扩缩容调优。
 - Redis 缓存、对象存储、内容安全扫描和高级审计。
 
@@ -28,24 +28,26 @@
 flowchart LR
     A[Agent / MCP Client] -->|HTTPS + API Key| C[Azure Container Apps<br/>API and MCP Server]
     C --> P[(Azure Database for PostgreSQL<br/>Flexible Server)]
+    C --> S[Azure AI Search<br/>Hybrid and Semantic Search]
     C --> O[Azure OpenAI<br/>Embedding]
     R[Azure Container Registry] -.容器镜像.-> C
     C -.日志.-> L[Log Analytics]
 ```
 
-整个应用使用一个容器和一个 PostgreSQL 数据库。HTTP API、MCP 工具、参数校验、Embedding 调用和检索排序都在同一个进程中完成。
+整个应用使用一个容器、一个 PostgreSQL 数据库和一个 Azure AI Search 索引。PostgreSQL 是记忆与版本的事实来源，Azure AI Search 只保存当前版本的可检索投影。HTTP API、MCP 工具、参数校验、Embedding 调用和索引同步都在同一个进程中完成。
 
 ## 只保留的 Azure 服务
 
 | Azure 服务 | 用途 | 必要性 |
 | --- | --- | --- |
 | Azure Container Apps | 运行 HTTP API 和 MCP Server | 唯一应用计算服务，部署简单且自带 HTTPS |
-| Azure Database for PostgreSQL Flexible Server | 保存记忆、版本、代码引用及向量 | 同时承担事实存储和检索，避免引入 Azure AI Search |
+| Azure Database for PostgreSQL Flexible Server | 保存记忆、版本和代码引用 | 作为不可变版本及业务数据的事实来源 |
+| Azure AI Search | 关键词、向量混合检索及语义重排 | 提供托管索引和语义搜索，减少自建检索逻辑 |
 | Azure OpenAI | 生成查询和记忆的 Embedding | 支持自然语言语义检索 |
 | Azure Container Registry | 保存应用镜像 | 供 Container Apps 拉取部署镜像 |
 | Log Analytics | 查看 Container Apps 日志 | 用于三天内排错和基本运行检查 |
 
-不单独部署 Key Vault。数据库连接和 API Key 暂时保存在 Container Apps Secret 中；Azure OpenAI 优先通过 Container Apps 托管标识访问。
+不单独部署 Key Vault。数据库连接和 API Key 暂时保存在 Container Apps Secret 中；Azure OpenAI 和 Azure AI Search 通过 Container Apps 托管标识访问。
 
 ## 删除的服务
 
@@ -55,7 +57,6 @@ flowchart LR
 | API Management | 应用内 API Key 校验和版本路由 | 需要外部开发者、配额或复杂 API 治理时 |
 | Azure Service Bus | 请求内同步写入和生成 Embedding | 写入量导致超时或需要可靠异步任务时 |
 | Azure Event Grid | 暂不接收仓库事件 | 开始自动检测代码变更时 |
-| Azure AI Search | PostgreSQL `pgvector` + `pg_trgm` | 数据量或查询并发超出 PostgreSQL 能力时 |
 | Azure Blob Storage | 小型报告和代码引用直接存 JSONB | 需要保存源码快照或大型附件时 |
 | Azure Managed Redis | 不做缓存 | PostgreSQL 或模型调用成为热点时 |
 | Azure Key Vault | Container Apps Secret | 进入正式生产或需要自动轮换时 |
@@ -73,10 +74,10 @@ aidoc-server
   api        HTTP 路由、认证和参数校验
   mcp        MCP 工具定义，直接调用相同业务函数
   memory     记忆写入、版本读取和项目过滤
-  search     Embedding、关键词召回和结果排序
+  search     Embedding、Azure AI Search 索引同步和混合查询
 ```
 
-HTTP 与 MCP 共用业务层，避免两套实现出现差异。服务保持无状态，所有持久化内容都在 PostgreSQL 中。
+HTTP 与 MCP 共用业务层，避免两套实现出现差异。服务保持无状态，所有权威业务数据都在 PostgreSQL 中，Azure AI Search 索引可随时重建。
 
 ## 最小数据模型
 
@@ -110,17 +111,31 @@ HTTP 与 MCP 共用业务层，避免两套实现出现差异。服务保持无�
 | `summary` | TEXT | 功能或接口说明 |
 | `details` | JSONB | 参数、返回值及补充结构化信息 |
 | `code_references` | JSONB | 提交、文件、符号和行号 |
-| `content_text` | TEXT | 用于关键词和 Embedding 的规范化文本 |
-| `embedding` | VECTOR | Azure OpenAI 生成的向量 |
+| `content_text` | TEXT | 用于重建搜索索引和生成 Embedding 的规范化文本 |
 | `created_by` | TEXT | Agent 或用户标识 |
 | `created_at` | TIMESTAMPTZ | 创建时间 |
 
-启用 PostgreSQL 的 `vector` 和 `pg_trgm` 扩展。建立以下索引：
+PostgreSQL 只建立业务查询需要的索引：
 
 - `memories(project_id, type)` B-tree 索引。
 - `memory_versions(memory_id, version)` 唯一索引。
-- `content_text` 的 GIN trigram 索引。
-- `embedding` 的 HNSW 向量索引；数据很少时可以先不创建。
+
+### Azure AI Search 索引
+
+只索引每条记忆的当前版本，最小字段如下：
+
+| 字段 | 类型 | 属性 |
+| --- | --- | --- |
+| `memoryId` | `Edm.String` | key、filterable |
+| `projectId` | `Edm.String` | filterable |
+| `type` | `Edm.String` | filterable、facetable |
+| `version` | `Edm.Int32` | filterable、sortable |
+| `title` | `Edm.String` | searchable，语义标题字段 |
+| `summary` | `Edm.String` | searchable，语义内容字段 |
+| `contentText` | `Edm.String` | searchable，语义内容字段 |
+| `embedding` | `Collection(Edm.Single)` | searchable，HNSW 向量字段 |
+
+代码引用仍以 PostgreSQL 为准，不在搜索索引中维护第二份完整副本。搜索返回 `memoryId` 后，应用批量读取 PostgreSQL 当前版本并组装响应。
 
 ## API 与 MCP
 
@@ -130,15 +145,18 @@ HTTP 与 MCP 共用业务层，避免两套实现出现差异。服务保持无�
 | --- | --- | --- |
 | 健康检查 | `GET /health` | 检查应用进程，不调用模型 |
 | 创建项目 | `POST /v1/projects` | 创建最小项目记录 |
+| 列出项目 | `GET /v1/projects` | 返回项目及其标识 |
 | 写入记忆 | `POST /v1/projects/{projectId}/memories` | 创建记忆及第一个版本 |
 | 修订记忆 | `POST /v1/memories/{memoryId}/versions` | 追加不可变版本 |
 | 获取记忆 | `GET /v1/memories/{memoryId}` | 返回当前版本及代码引用 |
-| 查询记忆 | `POST /v1/projects/{projectId}/search` | 返回混合检索结果 |
+| 查询记忆 | `POST /v1/projects/{projectId}/search` | 返回 Azure AI Search 混合及语义检索结果 |
 
 ### MCP 工具
 
-只实现三个工具：
+实现五个工具：
 
+- `create_project`：创建用于限定记忆和查询范围的项目。
+- `list_projects`：列出项目及其标识。
 - `report_memory`：创建或修订功能、接口或决策记忆。
 - `search_memories`：按项目查询相关记忆。
 - `get_memory`：读取指定记忆的当前版本和引用。
@@ -151,6 +169,7 @@ sequenceDiagram
     participant C as Container App
     participant O as Azure OpenAI
     participant P as PostgreSQL
+    participant S as Azure AI Search
 
     A->>C: report_memory
     C->>C: 校验并规范化文本
@@ -158,33 +177,36 @@ sequenceDiagram
     O-->>C: 向量
     C->>P: 事务写入 Memory 和 Version
     P-->>C: versionId
+    C->>S: Upsert 当前版本搜索文档
+    S-->>C: indexingResult
     C-->>A: 记忆 ID、版本和代码引用
 ```
 
-为了保持实现简单，写入同步生成 Embedding。Azure OpenAI 调用失败时仍保存记忆，`embedding` 设为 `NULL`；该记忆仍可通过关键词查询。提供一个受 API Key 保护的 `POST /internal/backfill-embeddings` 接口，人工触发缺失向量补齐，不引入队列和后台任务。
+为了保持实现简单，写入同步生成 Embedding 并更新搜索索引。Azure OpenAI 调用失败时仍保存记忆，并将不含向量的文档写入 Azure AI Search，使其仍可通过关键词查询。Azure AI Search 更新失败时不回滚 PostgreSQL 事务，响应返回 `indexingStatus: pending` 并记录错误。提供一个受 API Key 保护的 `POST /internal/reindex` 接口，从 PostgreSQL 当前版本重建或补齐索引，不引入队列和后台任务。
 
 ## 查询流程
 
 1. 校验 API Key 和 `projectId`。
 2. 调用 Azure OpenAI 生成查询向量；失败时降级为关键词查询。
-3. 在 PostgreSQL 中分别查询 trigram 相似度和向量距离。
-4. 在应用内按固定权重合并并去重结果。
-5. 返回前 10 条记忆的摘要、版本和代码引用。
+3. 向 Azure AI Search 发送文本查询、向量查询以及 `projectId` 和可选 `type` 过滤条件。
+4. Azure AI Search 使用 BM25 和向量检索召回候选，通过 Reciprocal Rank Fusion 合并，再使用 Semantic Ranker 重排。
+5. 应用按搜索结果中的 `memoryId` 批量读取 PostgreSQL，返回前 10 条记忆的摘要、版本和代码引用。
 
-MVP 排序可使用简单公式：
+向量查询使用余弦相似度并取最多 50 个近邻。语义配置将 `title` 设为标题字段，将 `summary` 和 `contentText` 设为内容字段。MVP 使用 Azure AI Search 原生混合排序，不在应用内维护另一套固定权重公式：
 
-$$
-score = 0.4 \times keywordScore + 0.6 \times vectorScore
-$$
+- 有查询向量时，使用文本、向量和语义重排。
+- 查询 Embedding 失败时，只使用文本和语义重排。
+- Semantic Ranker 请求失败时，应用重试不带语义重排的 BM25 与向量混合查询。
+- 不返回 semantic answers，只返回已保存的记忆摘要和代码引用，避免生成未持久化的答案。
 
-没有向量的记录只计算关键词分数。三天内不增加模型重排、时间衰减或反馈学习。
+三天内不增加自定义模型重排、时间衰减或反馈学习。
 
 ## 最小安全设计
 
 - Container Apps 只开放 HTTPS ingress。
 - 所有业务接口要求 `Authorization: Bearer <api-key>`。
 - API Key、数据库连接字符串保存在 Container Apps Secret，禁止写入镜像和日志。
-- Container Apps 使用托管标识调用 Azure OpenAI 和拉取 ACR 镜像。
+- Container Apps 使用托管标识调用 Azure OpenAI、Azure AI Search 和拉取 ACR 镜像。
 - PostgreSQL 只允许 Azure 服务和开发者当前出口 IP，并强制 TLS。
 - 默认只保存代码位置和摘要，不保存完整源码。
 - 日志不记录 API Key、数据库连接字符串或完整记忆正文。
@@ -201,15 +223,18 @@ API Key 方案只适用于单团队 MVP。进入生产前应替换为 Microsoft 
 | `API_KEY` | MVP 调用密钥，来自 Container Apps Secret |
 | `AZURE_OPENAI_ENDPOINT` | Azure OpenAI 端点 |
 | `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Embedding 部署名称 |
-| `EMBEDDING_DIMENSIONS` | 向量维度，必须与 PostgreSQL 列一致 |
+| `AZURE_AI_SEARCH_ENDPOINT` | Azure AI Search 端点 |
+| `AZURE_AI_SEARCH_INDEX` | 记忆索引名称 |
+| `AZURE_AI_SEARCH_SEMANTIC_CONFIGURATION` | 语义配置名称 |
+| `EMBEDDING_DIMENSIONS` | 向量维度，必须与 Azure AI Search 向量字段一致 |
 | `LOG_LEVEL` | 默认 `INFO` |
 
 ## 三天实施计划
 
 ### 第一天：基础链路
 
-- 创建 ACR、PostgreSQL、Azure OpenAI 和 Container Apps 环境。
-- 建立项目、记忆和版本表，启用 `vector` 与 `pg_trgm`。
+- 创建 ACR、PostgreSQL、Azure OpenAI、Azure AI Search 和 Container Apps 环境。
+- 建立项目、记忆和版本表，创建 Azure AI Search 混合向量索引及语义配置。
 - 创建单体服务，实现 `/health`、项目创建和记忆写入。
 - 本地完成数据库集成测试。
 
@@ -218,9 +243,9 @@ API Key 方案只适用于单团队 MVP。进入生产前应替换为 Microsoft 
 ### 第二天：检索与 MCP
 
 - 接入 Azure OpenAI Embedding。
-- 实现关键词、向量和混合查询。
+- 实现 Azure AI Search 索引同步、关键词与向量混合查询和语义重排。
 - 实现三个 MCP 工具，并复用 HTTP 业务层。
-- 增加 Embedding 失败降级和人工补齐接口。
+- 增加 Embedding 失败降级和人工重建索引接口。
 
 完成标准：Agent 可以报告一个功能，并通过另一种自然语言表述查到它及其代码引用。
 
@@ -240,6 +265,7 @@ API Key 方案只适用于单团队 MVP。进入生产前应替换为 Microsoft 
 - [ ] 查询严格限定在指定项目中。
 - [ ] 每个查询结果包含 `memoryId`、`version`、`summary` 和 `codeReferences`。
 - [ ] Azure OpenAI 不可用时写入与关键词查询仍能工作。
+- [ ] Azure AI Search 索引可以从 PostgreSQL 当前版本完整重建。
 - [ ] API Key 和连接字符串不会出现在仓库、镜像或日志中。
 - [ ] Container Apps 中能够查看请求错误和检索耗时。
 
@@ -250,7 +276,7 @@ API Key 方案只适用于单团队 MVP。进入生产前应替换为 Microsoft 
 | 观察到的问题 | 下一步 |
 | --- | --- |
 | 写入经常因 Embedding 超时 | 引入 Service Bus 和独立 Worker |
-| PostgreSQL 检索 P95 超过 2 秒 | 评估 Azure AI Search |
+| Azure AI Search 查询 P95 或容量接近上限 | 调整 SKU、分区数或副本数 |
 | 需要自动处理提交事件 | 引入 Event Grid 和失效分析任务 |
 | 需要存储大型源码快照 | 引入 Blob Storage |
 | 多团队使用且权限不同 | 接入 Entra ID 和项目级 RBAC |

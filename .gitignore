@@ -57,6 +57,7 @@ TestResult.xml
 nunit-*.xml
 
 # Local AI Doc files
+/.local/
 /demos/
 /standalone/.aidoc/
 /standalone/artifacts/
