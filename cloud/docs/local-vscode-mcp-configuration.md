@@ -60,7 +60,21 @@ az account show --query '{tenantId:tenantId,user:user.name}' -o json
 
 ## Required local values
 
-Obtain these from the deployment owner or a Git-ignored local registration file:
+The only required deployment-specific input is the AI Doc instance origin or its discovery URL:
+
+```text
+https://<container-app-fqdn>/.well-known/aidoc-mcp.json
+```
+
+Read the public, non-secret metadata:
+
+```powershell
+$origin = 'https://<container-app-fqdn>'
+$discovery = Invoke-RestMethod "$origin/.well-known/aidoc-mcp.json"
+$discovery | Select-Object tenantId, clientId, delegatedScope, mcpEndpoint, documentation, llms
+```
+
+The discovery response supplies:
 
 | Value | Format |
 | --- | --- |
@@ -69,14 +83,16 @@ Obtain these from the deployment owner or a Git-ignored local registration file:
 | Delegated scope | `api://<client-id>/access_as_user` |
 | MCP endpoint | `https://<container-app-fqdn>/mcp` |
 
-Do not commit deployment-specific IDs or endpoints into a reusable public template.
+These values identify the deployed API and are not secrets. The response intentionally excludes tokens, client secrets, access keys, database credentials, and the Container App managed identity client ID.
+
+Agents should rediscover these values per environment rather than copying IDs from another deployment.
 
 ## 1. Verify Entra token acquisition
 
 ```powershell
-$scope = 'api://<client-id>/access_as_user'
+$discovery = Invoke-RestMethod 'https://<container-app-fqdn>/.well-known/aidoc-mcp.json'
 az account get-access-token `
-  --scope $scope `
+  --scope $discovery.delegatedScope `
   --query '{expiresOn:expiresOn,tenant:tenant}' `
   --output json `
   --only-show-errors
@@ -88,8 +104,8 @@ When interactive login is required:
 
 ```powershell
 az login `
-  --tenant <tenant-id> `
-  --scope 'api://<client-id>/access_as_user'
+  --tenant $discovery.tenantId `
+  --scope $discovery.delegatedScope
 ```
 
 Never ask a user to paste an access token into chat.
@@ -123,45 +139,83 @@ Create `.local/aidoc-cloud/start-mcp.ps1`:
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-$tenantId = '<tenant-id>'
-$scope = 'api://<client-id>/access_as_user'
-$endpoint = 'https://<container-app-fqdn>/mcp'
+$discoveryUrl = 'https://<container-app-fqdn>/.well-known/aidoc-mcp.json'
 $proxy = Join-Path $PSScriptRoot 'mcp-client/node_modules/mcp-remote/dist/proxy.js'
 
 if (-not (Test-Path $proxy)) {
     throw "mcp-remote is not installed at '$proxy'."
 }
 
-$token = az account get-access-token `
-    --scope $scope `
-    --query accessToken `
-    --output tsv `
-    --only-show-errors
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($token)) {
-    throw "Unable to acquire an Entra token. Run 'az login --tenant $tenantId --scope $scope'."
+$discovery = Invoke-RestMethod $discoveryUrl
+$tokenResult = az account get-access-token `
+  --scope $discovery.delegatedScope `
+  --query '{accessToken:accessToken,expiresOn:expires_on}' `
+  --output json `
+  --only-show-errors | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($tokenResult.accessToken)) {
+  throw "Unable to acquire an Entra token. Run 'az login --tenant $($discovery.tenantId) --scope $($discovery.delegatedScope)'."
 }
 
-$env:AIDOC_ENTRA_AUTH_HEADER = "Bearer $token"
+$restartAt = [DateTimeOffset]::FromUnixTimeSeconds([long]$tokenResult.expiresOn).AddMinutes(-5)
+if ($restartAt -le [DateTimeOffset]::UtcNow) {
+  throw 'The acquired Entra token expires too soon to start an MCP session.'
+}
+
+$startInfo = [Diagnostics.ProcessStartInfo]::new()
+$startInfo.FileName = (Get-Command node -ErrorAction Stop).Source
+$startInfo.UseShellExecute = $false
+$startInfo.RedirectStandardInput = $true
+$startInfo.RedirectStandardOutput = $true
+$startInfo.RedirectStandardError = $true
+$startInfo.ArgumentList.Add($proxy)
+$startInfo.ArgumentList.Add($discovery.mcpEndpoint)
+$startInfo.ArgumentList.Add('--transport')
+$startInfo.ArgumentList.Add('http-only')
+$startInfo.ArgumentList.Add('--header')
+$startInfo.ArgumentList.Add('Authorization:${AIDOC_ENTRA_AUTH_HEADER}')
+$startInfo.ArgumentList.Add('--silent')
+$startInfo.Environment['AIDOC_ENTRA_AUTH_HEADER'] = "Bearer $($tokenResult.accessToken)"
+
+$proxyProcess = [Diagnostics.Process]::new()
+$proxyProcess.StartInfo = $startInfo
 try {
-    & node $proxy `
-        $endpoint `
-        --transport http-only `
-        --header 'Authorization:${AIDOC_ENTRA_AUTH_HEADER}' `
-        --silent
-    exit $LASTEXITCODE
+  if (-not $proxyProcess.Start()) {
+    throw 'Unable to start the MCP proxy process.'
+  }
+
+  $inputCopy = [Console]::OpenStandardInput().CopyToAsync($proxyProcess.StandardInput.BaseStream)
+  $outputCopy = $proxyProcess.StandardOutput.BaseStream.CopyToAsync([Console]::OpenStandardOutput())
+  $errorCopy = $proxyProcess.StandardError.BaseStream.CopyToAsync([Console]::OpenStandardError())
+
+  while (-not $proxyProcess.WaitForExit(1000)) {
+    if ([DateTimeOffset]::UtcNow -ge $restartAt) {
+      $proxyProcess.Kill($true)
+      $proxyProcess.WaitForExit()
+      exit 0
+    }
+  }
+
+  $exitCode = $proxyProcess.ExitCode
+  $null = [Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($outputCopy, $errorCopy), 5000)
+  exit $exitCode
 }
 finally {
-    Remove-Item Env:AIDOC_ENTRA_AUTH_HEADER -ErrorAction SilentlyContinue
+  if (-not $proxyProcess.HasExited) {
+    $proxyProcess.Kill($true)
+  }
+  $proxyProcess.Dispose()
 }
 ```
 
 Security properties:
 
+- Client ID, tenant, scope, and MCP endpoint are discovered from the target instance.
 - Token is requested at process start.
 - Token is not passed as a command-line argument.
 - Token is not written to disk.
 - Child process receives it through one environment variable.
-- Environment variable is deleted when the process exits.
+- The proxy exits five minutes before token expiry so VS Code can restart it with a fresh token.
+- The token environment variable exists only in the child process and disappears with that process.
 
 Confirm `.local` is ignored:
 
@@ -274,6 +328,7 @@ This is not the preferred persistent setup because `AIDOC_CLOUD_TOKEN` expires a
 | Symptom | Check | Recovery |
 | --- | --- | --- |
 | Dynamic tools absent | VS Code reload, user-profile registration, launcher path | Reload; rerun `code --add-mcp` |
+| Discovery endpoint fails | Instance origin, `/health`, DNS, ingress | Fix instance URL before debugging Entra |
 | `consent_required` | Delegated scope and client preauthorization | Fix Entra scope/consent; login again |
 | Launcher exits immediately | Azure login, Node path, proxy path | Run launcher manually and inspect non-secret error |
 | MCP returns 401 | Token `aud`, `iss`, `tid`, `scp` | Verify scope, tenant, and API audience validation |

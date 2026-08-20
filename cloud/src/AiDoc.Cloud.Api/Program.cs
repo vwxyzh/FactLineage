@@ -16,6 +16,10 @@ builder.Services
 	.AddOptions<CloudOptions>()
 	.Bind(builder.Configuration.GetSection(CloudOptions.SectionName))
 	.ValidateDataAnnotations()
+	.Validate(
+		options => options.ApiAudience.StartsWith("api://", StringComparison.OrdinalIgnoreCase)
+			&& Guid.TryParse(options.ApiAudience["api://".Length..], out _),
+		"Cloud:ApiAudience must use the format api://<application-client-id>.")
 	.ValidateOnStart();
 builder.Services.AddSingleton<TokenCredential>(services =>
 {
@@ -64,6 +68,8 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/docs/"));
+app.MapGet("/.well-known/aidoc-mcp.json", (HttpRequest request, IOptions<CloudOptions> options) =>
+	Results.Ok(McpDiscoveryDocument.Create(options.Value, $"https://{request.Host}")));
 app.MapHealthChecks("/health");
 app.MapAiDocApi();
 app.MapMcp("/mcp").RequireAuthorization();

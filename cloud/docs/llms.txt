@@ -2,6 +2,8 @@
 
 > AI Doc is durable, project-scoped, evidence-backed memory for software agents. PostgreSQL is authoritative, Azure AI Search is a rebuildable semantic projection, and all cloud access uses Microsoft Entra or managed identity rather than access keys.
 
+Instance-specific, non-secret MCP and Entra configuration is available from [MCP Instance Discovery](/.well-known/aidoc-mcp.json). Agents should read it instead of requesting a client ID from a user.
+
 ## Agent Start Here
 
 - [AI Doc for Software Agents](/docs/agent-introduction.md): Product mental model, project and memory entities, agent lifecycle protocol, quality contract, security model, standalone/cloud differences, and current boundaries.

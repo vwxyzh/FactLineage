@@ -83,6 +83,7 @@ Running the API locally requires the `Cloud__*` configuration values used in [ap
 
 | Operation | Endpoint |
 | --- | --- |
+| Discover MCP and Entra configuration | `GET /.well-known/aidoc-mcp.json` |
 | Process health | `GET /health` |
 | Create project | `POST /v1/projects` |
 | List projects | `GET /v1/projects` |
