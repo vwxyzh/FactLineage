@@ -15,6 +15,8 @@ After configuration, VS Code dynamically exposes these tools:
 - `report_memory`
 - `search_memories`
 - `get_memory`
+- `submit_memory_feedback`
+- `get_memory_feedback_summary`
 
 Tool names shown to an agent may include a sanitized server prefix, for example `mcp_aidoc_cloud_a_list_projects`.
 
@@ -244,7 +246,7 @@ Then:
 {"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
 ```
 
-Require server name `AiDoc.Cloud.Api` and all five tools. Keep stdin open while waiting for replies; a one-shot pipeline can terminate the proxy too early.
+Require server name `AiDoc.Cloud.Api` and all seven tools. Keep stdin open while waiting for replies; a one-shot pipeline can terminate the proxy too early.
 
 ## 5. Register in the VS Code user profile
 
@@ -346,6 +348,6 @@ Configuration is complete only when:
 
 - Token acquisition succeeds without printing or persisting the token.
 - Launcher `initialize` and `tools/list` succeed.
-- VS Code dynamically exposes all five tools.
+- VS Code dynamically exposes all seven tools.
 - A direct Code `list_projects` call succeeds.
 - A direct Code semantic search returns an expected memory.

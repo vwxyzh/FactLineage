@@ -10,6 +10,8 @@ public sealed class ApiExceptionHandler(IProblemDetailsService problemDetails, I
     {
         var (status, title, code) = exception switch
         {
+            DomainException domain when domain.Code == "ACTOR_IDENTITY_REQUIRED" =>
+                (StatusCodes.Status401Unauthorized, domain.Message, domain.Code),
             DomainException domain when domain.Code.EndsWith("_NOT_FOUND", StringComparison.Ordinal) =>
                 (StatusCodes.Status404NotFound, domain.Message, domain.Code),
             DomainException domain when domain.Code == "PROJECT_ALREADY_EXISTS" =>

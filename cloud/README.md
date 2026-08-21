@@ -23,6 +23,8 @@ PostgreSQL password authentication and local authentication for Azure AI Search 
 
 Inbound HTTP and MCP requests require a Microsoft Entra bearer token whose audience matches `apiAudience`. Create an Entra application registration that exposes this audience; the service validates tokens but does not need a client credential. A local developer can authenticate with `az login`, while another Azure workload should obtain the token through its own managed identity.
 
+Memory writes persist two author dimensions: `actorId` is derived from trusted Entra `tid` plus `oid` (or `sub` fallback), while `agentName` is the caller-supplied display label. Legacy `createdBy` remains accepted and returned as an alias for `agentName`; it is not an authenticated identity.
+
 ## Projects
 
 ```text
@@ -91,10 +93,15 @@ Running the API locally requires the `Cloud__*` configuration values used in [ap
 | Revise memory | `POST /v1/memories/{memoryId}/versions` |
 | Get memory | `GET /v1/memories/{memoryId}` |
 | Search memories | `POST /v1/projects/{projectId}/search` |
+| Submit or replace feedback | `PUT /v1/memories/{memoryId}/versions/{version}/feedback` |
+| Delete caller feedback | `DELETE /v1/memories/{memoryId}/versions/{version}/feedback` |
+| Get feedback summary | `GET /v1/memories/{memoryId}/versions/{version}/feedback-summary` |
 | Rebuild search index | `POST /internal/reindex` |
 | MCP Streamable HTTP | `/mcp` |
 
-Except for `/health`, all endpoints require an Entra bearer token. The MCP server exposes `create_project`, `list_projects`, `report_memory`, `search_memories`, and `get_memory`.
+Except for `/health`, documentation, and instance discovery, all endpoints require an Entra bearer token. The MCP server exposes `create_project`, `list_projects`, `report_memory`, `search_memories`, `get_memory`, `submit_memory_feedback`, and `get_memory_feedback_summary`.
+
+Feedback is scoped to an immutable memory version. Actor identity comes from the validated Entra token, not from tool or request input. Negative reasons `incorrect`, `stale`, and `missing_evidence` set `needsReview`; `irrelevant` records retrieval quality without asserting that the memory is wrong. Feedback does not change search ranking.
 
 The Entra application must expose a delegated `access_as_user` scope. A signed-in developer can request a short-lived token with:
 

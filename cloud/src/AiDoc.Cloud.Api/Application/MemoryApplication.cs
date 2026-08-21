@@ -24,37 +24,44 @@ public sealed class MemoryApplication(
     public Task<IReadOnlyList<ProjectRecord>> ListProjectsAsync(CancellationToken cancellationToken) =>
         repository.ListProjectsAsync(cancellationToken);
 
-    public async Task<MemoryWriteResult> ReportAsync(Guid projectId, ReportMemoryRequest request, CancellationToken cancellationToken)
+    public async Task<MemoryWriteResult> ReportAsync(Guid projectId, ReportMemoryRequest request, string actorId, CancellationToken cancellationToken)
     {
-        Validate(request.Type, request.Title, request.Summary, request.CodeReferences, request.CreatedBy);
+        var agentName = ResolveAgentName(request.AgentName, request.CreatedBy);
+        Validate(request.Type, request.Title, request.Summary, request.CodeReferences, agentName, actorId);
         var normalized = request with
         {
             Type = request.Type.Trim().ToLowerInvariant(),
             Title = request.Title.Trim(),
             Summary = request.Summary.Trim(),
-            CreatedBy = request.CreatedBy.Trim()
+            CreatedBy = agentName,
+            AgentName = agentName
         };
         var contentText = CreateContentText(normalized.Title, normalized.Summary, normalized.Details, normalized.CodeReferences);
         var embedding = await TryCreateEmbeddingAsync(contentText, cancellationToken);
-        var memory = await repository.CreateMemoryAsync(projectId, normalized, contentText, cancellationToken);
+        var memory = await repository.CreateMemoryAsync(projectId, normalized, contentText, actorId, cancellationToken);
         return new MemoryWriteResult(memory, await TryIndexAsync(memory, embedding, cancellationToken));
     }
 
-    public async Task<MemoryWriteResult> ReviseAsync(Guid memoryId, ReviseMemoryRequest request, CancellationToken cancellationToken)
+    public async Task<MemoryWriteResult> ReviseAsync(Guid memoryId, ReviseMemoryRequest request, string actorId, CancellationToken cancellationToken)
     {
-        Validate("feature", "revision", request.Summary, request.CodeReferences, request.CreatedBy);
+        var agentName = ResolveAgentName(request.AgentName, request.CreatedBy);
+        Validate("feature", "revision", request.Summary, request.CodeReferences, agentName, actorId);
         var current = await repository.GetMemoryAsync(memoryId, cancellationToken)
             ?? throw new DomainException("MEMORY_NOT_FOUND", $"Memory '{memoryId}' was not found.");
-        var normalized = request with { Summary = request.Summary.Trim(), CreatedBy = request.CreatedBy.Trim() };
+        var normalized = request with { Summary = request.Summary.Trim(), CreatedBy = agentName, AgentName = agentName };
         var contentText = CreateContentText(current.Title, normalized.Summary, normalized.Details, normalized.CodeReferences);
         var embedding = await TryCreateEmbeddingAsync(contentText, cancellationToken);
-        var memory = await repository.ReviseMemoryAsync(memoryId, normalized, contentText, cancellationToken);
+        var memory = await repository.ReviseMemoryAsync(memoryId, normalized, contentText, actorId, cancellationToken);
         return new MemoryWriteResult(memory, await TryIndexAsync(memory, embedding, cancellationToken));
     }
 
-    public async Task<MemoryRecord> GetAsync(Guid memoryId, CancellationToken cancellationToken) =>
-        await repository.GetMemoryAsync(memoryId, cancellationToken)
-        ?? throw new DomainException("MEMORY_NOT_FOUND", $"Memory '{memoryId}' was not found.");
+    public async Task<MemoryRecord> GetAsync(Guid memoryId, CancellationToken cancellationToken)
+    {
+        var memory = await repository.GetMemoryAsync(memoryId, cancellationToken)
+            ?? throw new DomainException("MEMORY_NOT_FOUND", $"Memory '{memoryId}' was not found.");
+        var feedbackSummary = await repository.GetFeedbackSummaryAsync(memory.MemoryId, memory.Version, cancellationToken);
+        return memory with { FeedbackSummary = feedbackSummary };
+    }
 
     public async Task<IReadOnlyList<MemorySearchResult>> SearchAsync(Guid projectId, string query, string? type, int limit, CancellationToken cancellationToken)
     {
@@ -72,11 +79,63 @@ public sealed class MemoryApplication(
         var hits = await searchIndex.SearchAsync(projectId, query.Trim(), type, limit, embedding, cancellationToken);
         var memories = await repository.GetMemoriesAsync(hits.Select(hit => hit.MemoryId).ToList(), cancellationToken);
         var memoryById = memories.ToDictionary(memory => memory.MemoryId);
+        var feedbackByMemoryId = await repository.GetCurrentFeedbackSummariesAsync(memoryById.Keys.ToList(), cancellationToken);
         return hits
             .Where(hit => memoryById.ContainsKey(hit.MemoryId))
-            .Select(hit => new MemorySearchResult(memoryById[hit.MemoryId], hit.Score))
+            .Select(hit => new MemorySearchResult(memoryById[hit.MemoryId], hit.Score, feedbackByMemoryId[hit.MemoryId]))
             .ToList();
     }
+
+    public Task<MemoryFeedbackResult> SubmitFeedbackAsync(Guid memoryId, int version, string actorId, MemoryFeedbackRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            throw new DomainException("ACTOR_IDENTITY_REQUIRED", "A stable authenticated actor identity is required.");
+        }
+
+        if (version < 1)
+        {
+            throw new DomainException("INVALID_MEMORY_VERSION", "Memory version must be greater than zero.");
+        }
+
+        var sentiment = request.Sentiment?.Trim().ToLowerInvariant() ?? string.Empty;
+        var reason = request.Reason?.Trim().ToLowerInvariant() ?? string.Empty;
+        if (sentiment is not ("useful" or "not_useful"))
+        {
+            throw new DomainException("INVALID_FEEDBACK_SENTIMENT", "Feedback sentiment must be useful or not_useful.");
+        }
+
+        var validReason = sentiment == "useful"
+            ? reason == "useful"
+            : reason is "incorrect" or "stale" or "irrelevant" or "missing_evidence";
+        if (!validReason)
+        {
+            throw new DomainException("INVALID_FEEDBACK_REASON", "Useful feedback requires reason useful; not_useful feedback requires incorrect, stale, irrelevant, or missing_evidence.");
+        }
+
+        var comment = NormalizeOptionalText(request.Comment, 2000, "INVALID_FEEDBACK_COMMENT", "Feedback comment must not exceed 2000 characters.");
+        var searchQuery = NormalizeOptionalText(request.SearchQuery, 2000, "INVALID_FEEDBACK_QUERY", "Feedback search query must not exceed 2000 characters.");
+        return repository.UpsertFeedbackAsync(memoryId, version, actorId, request with
+        {
+            Sentiment = sentiment,
+            Reason = reason,
+            Comment = comment,
+            SearchQuery = searchQuery
+        }, cancellationToken);
+    }
+
+    public Task<MemoryFeedbackSummary> DeleteFeedbackAsync(Guid memoryId, int version, string actorId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            throw new DomainException("ACTOR_IDENTITY_REQUIRED", "A stable authenticated actor identity is required.");
+        }
+
+        return repository.DeleteFeedbackAsync(memoryId, version, actorId, cancellationToken);
+    }
+
+    public Task<MemoryFeedbackSummary> GetFeedbackSummaryAsync(Guid memoryId, int version, CancellationToken cancellationToken) =>
+        repository.GetFeedbackSummaryAsync(memoryId, version, cancellationToken);
 
     public async Task<ReindexResult> ReindexAsync(CancellationToken cancellationToken)
     {
@@ -127,7 +186,24 @@ public sealed class MemoryApplication(
         return $"{title}\n{summary}\n{JsonSerializer.Serialize(details, JsonOptions)}\n{symbols}";
     }
 
-    private static void Validate(string type, string title, string summary, IReadOnlyList<CodeReference> references, string createdBy)
+    private static string? NormalizeOptionalText(string? value, int maximumLength, string code, string message)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value.Trim();
+        if (normalized.Length > maximumLength) throw new DomainException(code, message);
+        return normalized;
+    }
+
+    private static string ResolveAgentName(string? agentName, string? createdBy)
+    {
+        var value = !string.IsNullOrWhiteSpace(agentName) ? agentName : createdBy;
+        if (string.IsNullOrWhiteSpace(value)) throw new DomainException("INVALID_AGENT_NAME", "AgentName is required; createdBy is accepted for backward compatibility.");
+        var normalized = value.Trim();
+        if (normalized.Length > 200) throw new DomainException("INVALID_AGENT_NAME", "AgentName must not exceed 200 characters.");
+        return normalized;
+    }
+
+    private static void Validate(string type, string title, string summary, IReadOnlyList<CodeReference> references, string agentName, string actorId)
     {
         if (type.Trim().ToLowerInvariant() is not ("feature" or "api" or "decision"))
         {
@@ -136,7 +212,8 @@ public sealed class MemoryApplication(
 
         if (string.IsNullOrWhiteSpace(title)) throw new DomainException("INVALID_MEMORY_TITLE", "Memory title is required.");
         if (string.IsNullOrWhiteSpace(summary)) throw new DomainException("INVALID_MEMORY_SUMMARY", "Memory summary is required.");
-        if (string.IsNullOrWhiteSpace(createdBy)) throw new DomainException("INVALID_CREATED_BY", "CreatedBy is required.");
+        if (string.IsNullOrWhiteSpace(agentName)) throw new DomainException("INVALID_AGENT_NAME", "AgentName is required.");
+        if (string.IsNullOrWhiteSpace(actorId)) throw new DomainException("ACTOR_IDENTITY_REQUIRED", "A stable authenticated actor identity is required.");
         foreach (var reference in references)
         {
             if (string.IsNullOrWhiteSpace(reference.Path) || reference.StartLine < 1 || reference.EndLine < reference.StartLine)

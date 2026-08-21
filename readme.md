@@ -40,6 +40,15 @@ The current implementation goal is to complete the core workflow within three da
 - Support manual confirmation, rollback, archival, and deletion.
 - Provide project-level data isolation, access control, and audit logs.
 
+### Version-Level Quality Feedback
+
+- Let an authenticated agent mark a specific immutable version as `useful` or `not_useful`.
+- Require negative feedback to identify `incorrect`, `stale`, `irrelevant`, or `missing_evidence`.
+- Keep at most one current feedback record per actor and version; a new submission replaces that actor's prior signal.
+- Mark versions with current `incorrect`, `stale`, or `missing_evidence` signals as `needsReview` without editing or deleting memory content.
+- Expose aggregate counts and reasons to later agents so they can verify suspect evidence before use.
+- Keep initial retrieval ranking independent of feedback until volume, abuse resistance, and offline evaluation justify a quality model.
+
 ### Agent Integration
 
 - Provide an HTTP API and MCP Server for consistent memory access across agents.
@@ -113,7 +122,7 @@ The repository listener consumes commit, pull request, or CI events and uses cha
 | --- | --- | --- |
 | Project | `id`, `repository`, `defaultBranch` | Memory isolation boundary |
 | Memory | `id`, `type`, `title`, `summary`, `status` | Unified container for feature, interface, decision, and other memories |
-| MemoryVersion | `memoryId`, `content`, `commit`, `createdBy` | Immutable memory version |
+| MemoryVersion | `memoryId`, `content`, `commit`, `agentName`, `actorId` | Immutable version with an agent display label and trusted Entra actor identity |
 | CodeReference | `repository`, `commit`, `path`, `symbol`, `lines` | Reference to a verifiable code fact |
 | Relation | `sourceId`, `targetId`, `type` | Relationship between features, interfaces, modules, and symbols |
 | Evidence | `memoryVersionId`, `sourceType`, `sourceUri` | Source and confidence evidence for a memory |
@@ -129,13 +138,16 @@ Recommended memory statuses are `active`, `needs_review`, `stale`, `deprecated`,
 | Search memories | `POST /v1/projects/{projectId}/search` | Perform natural-language and structured hybrid retrieval |
 | Get memory | `GET /v1/memories/{memoryId}` | View details, relationships, and versions |
 | Mark invalid | `POST /v1/projects/{projectId}/invalidation-jobs` | Check for stale memories based on code changes |
-| Submit feedback | `POST /v1/memories/{memoryId}/feedback` | Report that a result is useful, incorrect, or stale |
+| Submit or replace feedback | `PUT /v1/memories/{memoryId}/versions/{version}/feedback` | Record the caller's version-level quality signal |
+| Remove feedback | `DELETE /v1/memories/{memoryId}/versions/{version}/feedback` | Remove the caller's current signal |
+| Get feedback summary | `GET /v1/memories/{memoryId}/versions/{version}/feedback-summary` | Return aggregate counts, reasons, and review state |
 
 Every query result should include at least `memoryId`, `version`, `status`, `score`, `summary`, `codeReferences`, and `evidence`.
 
 ## Non-Functional Requirements
 
 - **Traceability**: conclusions about code must identify a commit and file location; unverifiable information must be explicitly marked.
+- **Author auditing**: derive `actorId` from validated authentication claims; treat `agentName` as a caller-supplied display label and accept `createdBy` only as a compatibility alias.
 - **Consistency**: memory versions are immutable. Indexes may be eventually consistent, but query results must expose the index version.
 - **Security**: support tenant isolation, least privilege, sensitive information filtering, and encryption in transit and at rest.
 - **Observability**: track write success rate, query latency, retrieval quality, stale rate, and conflict rate.

@@ -40,6 +40,15 @@ AI Doc 是一个面向 AI Agent 的项目长时记忆系统。它持续记录代
 - 支持人工确认、回滚、归档和删除。
 - 提供项目级数据隔离、访问控制和审计日志。
 
+### 版本级质量反馈
+
+- 允许经过认证的 Agent 对指定不可变版本标记 `useful` 或 `not_useful`。
+- 负面反馈必须选择 `incorrect`、`stale`、`irrelevant` 或 `missing_evidence`。
+- 同一 actor 对同一版本最多保留一个当前反馈；再次提交替换自己的先前信号。
+- 当前反馈中存在 `incorrect`、`stale` 或 `missing_evidence` 时，将该版本标记为 `needsReview`，但不自动修改或删除记忆。
+- 向后续 Agent 返回聚合计数和原因，使其在使用可疑记忆前重新验证证据。
+- 在反馈量、抗滥用机制和离线评估成熟前，不让反馈直接影响初始检索排序。
+
 ### Agent 集成
 
 - 提供 HTTP API 和 MCP Server，供不同 Agent 统一读写记忆。
@@ -113,7 +122,7 @@ flowchart LR
 | --- | --- | --- |
 | Project | `id`、`repository`、`defaultBranch` | 记忆隔离边界 |
 | Memory | `id`、`type`、`title`、`summary`、`status` | 功能、接口、决策等记忆的统一载体 |
-| MemoryVersion | `memoryId`、`content`、`commit`、`createdBy` | 不可变的记忆版本 |
+| MemoryVersion | `memoryId`、`content`、`commit`、`agentName`、`actorId` | 同时保存 Agent 显示名称和可信 Entra 调用身份的不可变版本 |
 | CodeReference | `repository`、`commit`、`path`、`symbol`、`lines` | 指向可验证的代码事实 |
 | Relation | `sourceId`、`targetId`、`type` | 功能、接口、模块和符号之间的关系 |
 | Evidence | `memoryVersionId`、`sourceType`、`sourceUri` | 记忆的来源与可信度依据 |
@@ -129,13 +138,16 @@ flowchart LR
 | 查询记忆 | `POST /v1/projects/{projectId}/search` | 执行自然语言和结构化混合检索 |
 | 获取记忆 | `GET /v1/memories/{memoryId}` | 查看详情、关系和版本 |
 | 标记失效 | `POST /v1/projects/{projectId}/invalidation-jobs` | 根据代码变更检查过期记忆 |
-| 提交反馈 | `POST /v1/memories/{memoryId}/feedback` | 报告结果有用、错误或已过期 |
+| 提交或替换反馈 | `PUT /v1/memories/{memoryId}/versions/{version}/feedback` | 保存调用方对指定版本的质量信号 |
+| 删除反馈 | `DELETE /v1/memories/{memoryId}/versions/{version}/feedback` | 删除调用方的当前反馈 |
+| 获取反馈摘要 | `GET /v1/memories/{memoryId}/versions/{version}/feedback-summary` | 返回聚合计数、原因和复核状态 |
 
 所有查询结果至少应包含 `memoryId`、`version`、`status`、`score`、`summary`、`codeReferences` 和 `evidence`。
 
 ## 非功能要求
 
 - **可追溯性**：代码相关结论必须能定位到提交和文件；无法验证的内容需明确标记。
+- **作者审计**：从已验证认证 claim 派生 `actorId`；将 `agentName` 视为调用方声明的显示名称，`createdBy` 仅作为兼容别名。
 - **一致性**：记忆版本不可变，索引允许最终一致，但查询结果必须暴露索引版本。
 - **安全性**：支持租户隔离、最小权限、敏感信息过滤、传输与静态加密。
 - **可观测性**：记录写入成功率、查询延迟、召回质量、过期率和冲突率。

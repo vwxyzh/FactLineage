@@ -18,13 +18,15 @@ public sealed record ReportMemoryRequest(
     string Summary,
     JsonElement? Details,
     IReadOnlyList<CodeReference> CodeReferences,
-    string CreatedBy);
+    string? CreatedBy = null,
+    string? AgentName = null);
 
 public sealed record ReviseMemoryRequest(
     string Summary,
     JsonElement? Details,
     IReadOnlyList<CodeReference> CodeReferences,
-    string CreatedBy);
+    string? CreatedBy = null,
+    string? AgentName = null);
 
 public sealed record MemoryRecord(
     Guid MemoryId,
@@ -37,11 +39,42 @@ public sealed record MemoryRecord(
     IReadOnlyList<CodeReference> CodeReferences,
     string ContentText,
     string CreatedBy,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string? ActorId = null,
+    MemoryFeedbackSummary? FeedbackSummary = null)
+{
+    public string AgentName => CreatedBy;
+}
 
 public sealed record MemoryWriteResult(MemoryRecord Memory, string IndexingStatus);
 
-public sealed record MemorySearchResult(MemoryRecord Memory, double Score);
+public sealed record MemoryFeedbackRequest(
+    string Sentiment,
+    string Reason,
+    string? Comment = null,
+    string? SearchQuery = null);
+
+public sealed record MemoryFeedbackSummary(
+    Guid MemoryId,
+    int Version,
+    int UsefulCount,
+    int NotUsefulCount,
+    int IncorrectCount,
+    int StaleCount,
+    int IrrelevantCount,
+    int MissingEvidenceCount,
+    bool NeedsReview);
+
+public sealed record MemoryFeedbackResult(
+    Guid MemoryId,
+    int Version,
+    string Sentiment,
+    string Reason,
+    string? Comment,
+    DateTimeOffset UpdatedAt,
+    MemoryFeedbackSummary Summary);
+
+public sealed record MemorySearchResult(MemoryRecord Memory, double Score, MemoryFeedbackSummary FeedbackSummary);
 
 public sealed record ReindexResult(int Scanned, int Indexed, int Pending);
 

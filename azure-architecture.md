@@ -10,6 +10,7 @@ This document describes only the smallest system that can be completed within th
 - The system stores immutable memory versions and code references.
 - Agents can query memories using natural language and project filters.
 - Queries use both keyword and vector similarity and return sources.
+- Agents can mark a specific memory version as useful or not useful and provide a structured quality reason.
 - The system provides an HTTP API and a minimal MCP Server.
 - The system is deployed to one Azure region and can be called by local agents.
 
@@ -21,12 +22,13 @@ This document describes only the smallest system that can be completed within th
 - Message queues or asynchronous indexing pipelines.
 - Private networking, WAF, multiple regions, disaster recovery, or autoscaling optimization.
 - Redis caching, object storage, content safety scanning, or advanced auditing.
+- Feedback-driven ranking, automatic memory edits, or automatic deletion based on votes.
 
 ## Minimal Azure Architecture
 
 ```mermaid
 flowchart LR
-    A[Agent / MCP Client] -->|HTTPS + API Key| C[Azure Container Apps<br/>API and MCP Server]
+  A[Agent / MCP Client] -->|HTTPS + Entra Token| C[Azure Container Apps<br/>API and MCP Server]
     C --> P[(Azure Database for PostgreSQL<br/>Flexible Server)]
   C --> S[Azure AI Search<br/>Hybrid and Semantic Search]
     C --> O[Azure OpenAI<br/>Embedding]
@@ -47,14 +49,14 @@ The entire application uses one container, one PostgreSQL database, and one Azur
 | Azure Container Registry | Store the application image | Supplies the deployment image to Container Apps |
 | Log Analytics | View Container Apps logs | Supports troubleshooting and basic operational checks during the three-day implementation |
 
-Key Vault is not deployed separately. The database connection and API key are temporarily stored in Container Apps secrets. Azure OpenAI and Azure AI Search are accessed through the Container Apps managed identity.
+Key Vault is not deployed separately because the service stores no Azure access keys or database password. Azure OpenAI, Azure AI Search, PostgreSQL, and ACR are accessed through the Container Apps user-assigned managed identity.
 
 ## Services Removed
 
 | Removed Service | MVP Alternative | When to Introduce It Later |
 | --- | --- | --- |
 | Azure Front Door | Use the Container Apps HTTPS endpoint directly | When WAF, a global endpoint, or multi-region routing is required |
-| API Management | Validate API keys and route versions within the application | When external developers, quotas, or complex API governance are required |
+| API Management | Validate Entra tokens and route versions within the application | When external developers, quotas, or complex API governance are required |
 | Azure Service Bus | Write data and generate embeddings synchronously within the request | When write volume causes timeouts or reliable asynchronous processing is required |
 | Azure Event Grid | Do not receive repository events yet | When automatic code change detection begins |
 | Azure Blob Storage | Store small reports and code references directly in JSONB | When source snapshots or large attachments must be stored |
@@ -112,13 +114,35 @@ HTTP and MCP share the business layer to avoid differences between two implement
 | `details` | JSONB | Parameters, return values, and additional structured information |
 | `code_references` | JSONB | Commit, file, symbol, and line numbers |
 | `content_text` | TEXT | Normalized text used to rebuild the search index and generate embeddings |
-| `created_by` | TEXT | Agent or user identifier |
+| `created_by` | TEXT | Agent display name; retained as the backward-compatible storage column |
+| `actor_id` | TEXT NULL | Trusted Entra `tid:oid`/`tid:sub`; null only for historical versions created before trusted auditing |
 | `created_at` | TIMESTAMPTZ | Creation time |
+
+Write requests prefer `agentName`; legacy `createdBy` is accepted as the same untrusted display label. The service ignores request input for `actorId` and derives it from validated Entra claims. Read responses expose both `agentName` and the legacy `createdBy` alias plus trusted `actorId`.
+
+### memory_feedback
+
+Feedback is scoped to an immutable memory version rather than to the mutable memory head.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | UUID | Feedback identifier |
+| `memory_version_id` | UUID | Version being evaluated |
+| `actor_id` | TEXT | Entra `oid` or stable caller subject |
+| `sentiment` | TEXT | `useful` or `not_useful` |
+| `reason` | TEXT | `useful`, `incorrect`, `stale`, `irrelevant`, or `missing_evidence` |
+| `comment` | TEXT NULL | Optional concise correction or context |
+| `search_query` | TEXT NULL | Optional query that produced the result; omit when sensitive |
+| `created_at` | TIMESTAMPTZ | Initial submission time |
+| `updated_at` | TIMESTAMPTZ | Last replacement time |
+
+Create a unique index on `memory_feedback(memory_version_id, actor_id)`. A caller replaces its own current feedback instead of adding multiple votes for the same version. Deleting feedback removes only that caller's record.
 
 Create only the PostgreSQL indexes required for business queries:
 
 - A B-tree index on `memories(project_id, type)`.
 - A unique index on `memory_versions(memory_id, version)`.
+- A unique index on `memory_feedback(memory_version_id, actor_id)`.
 
 ### Azure AI Search Index
 
@@ -150,16 +174,23 @@ Code references remain authoritative in PostgreSQL and are not duplicated in ful
 | Revise memory | `POST /v1/memories/{memoryId}/versions` | Append an immutable version |
 | Get memory | `GET /v1/memories/{memoryId}` | Return the current version and code references |
 | Search memories | `POST /v1/projects/{projectId}/search` | Return Azure AI Search hybrid and semantic retrieval results |
+| Submit or replace feedback | `PUT /v1/memories/{memoryId}/versions/{version}/feedback` | Record the caller's version-level quality signal |
+| Remove feedback | `DELETE /v1/memories/{memoryId}/versions/{version}/feedback` | Remove the caller's current signal |
+| Get feedback summary | `GET /v1/memories/{memoryId}/versions/{version}/feedback-summary` | Return aggregate counts, reasons, and review state |
 
 ### MCP Tools
 
-Implement five tools:
+Implement seven tools:
 
 - `create_project`: create a project used to scope memories and searches.
 - `list_projects`: list projects and their identifiers.
 - `report_memory`: create or revise a feature, API, or decision memory.
 - `search_memories`: query relevant memories within a project.
 - `get_memory`: read the current version and references for a specific memory.
+- `submit_memory_feedback`: submit or replace the caller's feedback for a specific version.
+- `get_memory_feedback_summary`: read aggregate quality signals and review state for a specific version.
+
+The MCP surface does not expose actor identity as a parameter. The service derives it from the validated Entra token so one agent cannot vote on behalf of another.
 
 ## Write Flow
 
@@ -182,15 +213,16 @@ sequenceDiagram
     C-->>A: Memory ID, version, and code references
 ```
 
-To keep the implementation simple, embeddings are generated and the search index is updated synchronously during writes. If the Azure OpenAI call fails, the memory is still saved and a document without a vector is written to Azure AI Search so it remains available through keyword queries. If the Azure AI Search update fails, do not roll back the PostgreSQL transaction; return `indexingStatus: pending` and log the error. Provide an API key-protected `POST /internal/reindex` endpoint that rebuilds or repairs the index from current PostgreSQL versions without introducing a queue or background jobs.
+To keep the implementation simple, embeddings are generated and the search index is updated synchronously during writes. If the Azure OpenAI call fails, the memory is still saved and a document without a vector is written to Azure AI Search so it remains available through keyword queries. If the Azure AI Search update fails, do not roll back the PostgreSQL transaction; return `indexingStatus: pending` and log the error. Provide an Entra-protected `POST /internal/reindex` endpoint that rebuilds or repairs the index from current PostgreSQL versions without introducing a queue or background jobs.
 
 ## Query Flow
 
-1. Validate the API key and `projectId`.
+1. Validate the Entra token and `projectId`.
 2. Call Azure OpenAI to generate a query vector; fall back to keyword retrieval if the call fails.
 3. Send the text query, vector query, and `projectId` plus optional `type` filters to Azure AI Search.
 4. Azure AI Search retrieves candidates using BM25 and vector search, combines them using Reciprocal Rank Fusion, and reranks them with Semantic Ranker.
 5. The application reads the matching current versions from PostgreSQL in a batch and returns summaries, versions, and code references for the top 10 memories.
+6. The application attaches each returned version's feedback summary and `needsReview` warning from PostgreSQL.
 
 The vector query uses cosine similarity and retrieves at most 50 nearest neighbors. The semantic configuration uses `title` as the title field and `summary` plus `contentText` as content fields. The MVP uses native Azure AI Search hybrid ranking instead of maintaining a separate fixed-weight formula in the application:
 
@@ -201,17 +233,32 @@ The vector query uses cosine similarity and retrieves at most 50 nearest neighbo
 
 Do not add custom model-based reranking, time decay, or feedback learning during the three-day implementation.
 
+## Feedback and Quality Review
+
+The visible interaction can be thumbs up or thumbs down, but storage and agent contracts are structured:
+
+- Thumbs up maps to `sentiment: useful` and `reason: useful`.
+- Thumbs down maps to `sentiment: not_useful` and requires one of `incorrect`, `stale`, `irrelevant`, or `missing_evidence`.
+- `incorrect`, `stale`, and `missing_evidence` set the version summary's `needsReview` flag to `true` when at least one current signal exists.
+- `irrelevant` describes retrieval quality for the submitted query and does not by itself assert that the memory is wrong.
+- A comment may propose a correction, but feedback never edits memory content or code references.
+
+Feedback summaries contain `usefulCount`, `notUsefulCount`, counts by reason, and `needsReview`. Search and get responses show this summary so agents can treat flagged memories as suspect and verify their evidence before use.
+
+Initial ranking remains BM25, vector retrieval, Reciprocal Rank Fusion, and Semantic Ranker. Do not multiply ranking scores by vote counts until there is enough feedback volume, abuse resistance, offline evaluation, and a version-aware quality model. This prevents a few votes from hiding correct project facts.
+
 ## Minimal Security Design
 
 - Container Apps exposes only HTTPS ingress.
-- Every business endpoint requires `Authorization: Bearer <api-key>`.
-- The API key and database connection string are stored in Container Apps secrets and must not be written to the image or logs.
-- Container Apps uses a managed identity to call Azure OpenAI and Azure AI Search and to pull images from ACR.
+- Every business endpoint requires a Microsoft Entra bearer token for the configured API audience.
+- The service derives feedback actor identity from validated token claims and never accepts it from request input.
+- Container Apps uses a user-assigned managed identity to call PostgreSQL, Azure OpenAI, and Azure AI Search and to pull images from ACR.
 - PostgreSQL allows only Azure services and the developer's current outbound IP and enforces TLS.
 - By default, store only code locations and summaries, not complete source code.
-- Logs must not contain the API key, database connection string, or complete memory contents.
+- Logs must not contain bearer tokens, credential-bearing connection strings, or complete memory contents.
+- Logs must not contain feedback comments or search queries; record only feedback reason, version ID, and outcome when operationally necessary.
 
-The API key approach is suitable only for a single-team MVP. Replace it with Microsoft Entra ID before moving to production.
+The Entra App Registration exposes an `access_as_user` delegated scope for interactive agents. Azure workload callers use their own Entra identity; no client secret is required by the AI Doc service.
 
 ## Configuration
 
@@ -219,15 +266,18 @@ The application requires only the following environment variables:
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | PostgreSQL TLS connection string from a Container Apps secret |
-| `API_KEY` | MVP access key from a Container Apps secret |
-| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI endpoint |
-| `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Embedding deployment name |
-| `AZURE_AI_SEARCH_ENDPOINT` | Azure AI Search endpoint |
-| `AZURE_AI_SEARCH_INDEX` | Memory index name |
-| `AZURE_AI_SEARCH_SEMANTIC_CONFIGURATION` | Semantic configuration name |
-| `EMBEDDING_DIMENSIONS` | Vector dimensions, which must match the Azure AI Search vector field |
-| `LOG_LEVEL` | Defaults to `INFO` |
+| `Cloud__ManagedIdentityClientId` | User-assigned managed identity client ID |
+| `Cloud__TenantId` | Entra tenant ID used for token validation |
+| `Cloud__ApiAudience` | AI Doc API Application ID URI |
+| `Cloud__PostgreSql__Host` | PostgreSQL host; authentication uses an Entra token |
+| `Cloud__PostgreSql__Database` | PostgreSQL database name |
+| `Cloud__PostgreSql__User` | Managed identity principal name |
+| `Cloud__Search__Endpoint` | Azure AI Search endpoint |
+| `Cloud__Search__IndexName` | Memory index name |
+| `Cloud__Search__SemanticConfigurationName` | Semantic configuration name |
+| `Cloud__OpenAi__Endpoint` | Azure OpenAI endpoint |
+| `Cloud__OpenAi__EmbeddingDeployment` | Embedding deployment name |
+| `Cloud__OpenAi__EmbeddingDimensions` | Vector dimensions matching the Search vector field |
 
 ## Three-Day Implementation Plan
 
@@ -244,16 +294,17 @@ Completion criteria: a memory with code references can be written over HTTP and 
 
 - Integrate Azure OpenAI embeddings.
 - Implement Azure AI Search index synchronization, keyword and vector hybrid queries, and semantic reranking.
-- Implement the three MCP tools and reuse the HTTP business layer.
+- Implement the seven MCP tools and reuse the HTTP business layer.
 - Add fallback behavior for embedding failures and the manual index rebuild endpoint.
+- Implement version-scoped feedback submission, summary reads, and `needsReview` warnings without changing ranking.
 
 Completion criteria: an agent can report a feature and find it, together with its code references, using a different natural-language description.
 
 ### Day 3: Deployment and Acceptance
 
 - Build the image, push it to ACR, and deploy it to Container Apps.
-- Configure the managed identity, secrets, HTTPS ingress, and database firewall.
-- Add API key authentication, structured logging, and minimal error handling.
+- Configure the managed identity, Entra API application, HTTPS ingress, and database firewall.
+- Add Entra authentication, structured logging, and minimal error handling.
 - Run end-to-end tests and add invocation examples and deployment instructions.
 
 Completion criteria: a local IDE agent can call the MCP Server in Azure; memories survive a service restart; and keyword retrieval remains available during a temporary Azure OpenAI failure.
@@ -266,7 +317,10 @@ Completion criteria: a local IDE agent can call the MCP Server in Azure; memorie
 - [ ] Every query result includes `memoryId`, `version`, `summary`, and `codeReferences`.
 - [ ] Writes and keyword retrieval continue to work when Azure OpenAI is unavailable.
 - [ ] The Azure AI Search index can be rebuilt completely from current PostgreSQL versions.
-- [ ] The API key and connection string do not appear in the repository, image, or logs.
+- [ ] Feedback is scoped to an immutable version and one actor has at most one current signal per version.
+- [ ] Negative feedback requires a structured reason and cannot modify or delete a memory.
+- [ ] Search and get responses expose feedback summary and `needsReview` without changing ranking.
+- [ ] Bearer tokens, access keys, client secrets, and credential-bearing connection strings do not appear in the repository, image, or logs.
 - [ ] Request errors and retrieval latency are visible in Container Apps.
 
 ## Scaling Triggers

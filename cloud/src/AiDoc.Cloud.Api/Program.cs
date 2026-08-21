@@ -38,6 +38,7 @@ builder.Services
 		};
 	});
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddSingleton<NpgsqlDataSource>(PostgresDataSourceFactory.Create);

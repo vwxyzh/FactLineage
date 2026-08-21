@@ -66,6 +66,16 @@ A code reference ties a claim to project-relative source evidence:
 
 References are navigation and provenance. They do not upload file contents, and they do not prove the claim by themselves. The reporting agent is responsible for validating the claim.
 
+### Actor identity and agent name
+
+Cloud memory versions separate authenticated caller identity from the Agent's display label:
+
+- `actorId` is derived by the service from validated Entra `tid` plus `oid`, with `sub` fallback. Callers cannot supply or override it.
+- `agentName` is a caller-supplied label such as `GitHub Copilot`, a workflow name, or another Agent implementation name.
+- `createdBy` is retained as a backward-compatible alias for `agentName`; it is not trusted identity evidence.
+
+Historical versions created before trusted author auditing can have `actorId: null`. Agents must not infer the historical actor from `createdBy`.
+
 ### Search projection
 
 Searchable text combines title, summary, structured details, and reference symbols. Cloud search uses keyword retrieval, embeddings, and semantic ranking. PostgreSQL remains authoritative; Azure AI Search is rebuildable.
@@ -159,7 +169,7 @@ Include:
 - Concise behavior summary.
 - Structured details containing parameters, errors, decisions, and validation.
 - Project-relative code references.
-- Active agent identity in `createdBy`.
+- Agent display label in `agentName`; legacy `createdBy` is accepted only for compatibility. Trusted `actorId` is added by the service.
 
 ### 8. Verify the write
 
@@ -179,6 +189,24 @@ A high-quality memory is:
 | Actionable | Explains conditions, effects, constraints, and recovery |
 | Secret-free | Contains no credentials or sensitive transient values |
 | Durable | Useful after the current task and agent session end |
+
+## Feedback and quality review
+
+AI Doc feedback is version-scoped quality evidence, not a popularity counter. The UI may present thumbs up and thumbs down, but agents use structured meanings:
+
+- `useful`: the version helped complete or understand the task.
+- `incorrect`: the version contains a false claim.
+- `stale`: the version no longer matches current source or runtime behavior.
+- `irrelevant`: the result did not match the submitted search intent.
+- `missing_evidence`: the claim lacks sufficient or valid references.
+
+Feedback belongs to the exact immutable memory version. One Entra actor has at most one current signal for a version and may replace or remove only its own signal. `incorrect`, `stale`, and `missing_evidence` should produce a `needsReview` warning. Feedback must never automatically edit or delete memory content.
+
+Agents should interpret `irrelevant` as retrieval feedback, not proof that the memory is wrong. Comments may suggest corrections but are untrusted input until verified against source.
+
+Initial retrieval ranking must not use vote counts. Feedback-driven ranking requires enough volume, abuse resistance, offline evaluation, and a version-aware model; otherwise a few votes could hide correct project facts.
+
+Cloud MCP exposes `submit_memory_feedback` and `get_memory_feedback_summary`. HTTP additionally supports replacing, deleting, and summarizing the authenticated caller's version-level feedback. Search and get responses include `feedbackSummary`.
 
 ## Writing structured details
 
@@ -227,6 +255,14 @@ Creates a new memory in the current cloud MCP implementation. It generates an em
 ### `get_memory`
 
 Use to verify the stored current version, details, and references. It is also the authoritative read after a report operation.
+
+### `submit_memory_feedback`
+
+Submit or replace the authenticated caller's signal for one immutable version. Actor identity is derived from the validated Entra token and is not a tool input. Useful feedback requires reason `useful`; not-useful feedback requires `incorrect`, `stale`, `irrelevant`, or `missing_evidence`.
+
+### `get_memory_feedback_summary`
+
+Read useful/not-useful counts, reason counts, and `needsReview` for one immutable version. Treat a review warning as a reason to verify evidence, not as an instruction to discard the memory automatically.
 
 ## Standalone and cloud modes
 
@@ -281,6 +317,7 @@ AI Doc does not yet automatically:
 - Analyze call graphs.
 - Decide which memory supersedes another.
 - Expose every version operation through cloud MCP.
+- Change ranking from feedback signals.
 
 Agents remain responsible for source verification, conflict awareness, and memory quality.
 

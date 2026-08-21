@@ -10,7 +10,7 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private const string CurrentMemoryColumns = """
         SELECT m.id, m.project_id, m.type, m.title, v.version, v.summary,
-               v.details::text, v.code_references::text, v.content_text, v.created_by, v.created_at
+             v.details::text, v.code_references::text, v.content_text, v.created_by, v.created_at, v.actor_id
         FROM memories m
         JOIN memory_versions v ON v.memory_id = m.id AND v.version = m.current_version
         """;
@@ -41,10 +41,27 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
                 code_references JSONB NOT NULL,
                 content_text TEXT NOT NULL,
                 created_by TEXT NOT NULL,
+                actor_id TEXT NULL,
                 created_at TIMESTAMPTZ NOT NULL,
                 UNIQUE(memory_id, version)
             );
+            ALTER TABLE memory_versions ADD COLUMN IF NOT EXISTS actor_id TEXT NULL;
+            CREATE TABLE IF NOT EXISTS memory_feedback (
+                id UUID PRIMARY KEY,
+                memory_version_id UUID NOT NULL REFERENCES memory_versions(id) ON DELETE CASCADE,
+                actor_id TEXT NOT NULL,
+                sentiment TEXT NOT NULL CHECK (sentiment IN ('useful', 'not_useful')),
+                reason TEXT NOT NULL CHECK (reason IN ('useful', 'incorrect', 'stale', 'irrelevant', 'missing_evidence')),
+                comment TEXT NULL,
+                search_query TEXT NULL,
+                created_at TIMESTAMPTZ NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL,
+                CHECK ((sentiment = 'useful' AND reason = 'useful') OR
+                       (sentiment = 'not_useful' AND reason IN ('incorrect', 'stale', 'irrelevant', 'missing_evidence'))),
+                UNIQUE(memory_version_id, actor_id)
+            );
             CREATE INDEX IF NOT EXISTS ix_memories_project_type ON memories(project_id, type);
+            CREATE INDEX IF NOT EXISTS ix_memory_feedback_version_reason ON memory_feedback(memory_version_id, reason);
             """;
         await using var command = dataSource.CreateCommand(sql);
         await command.ExecuteNonQueryAsync(cancellationToken);
@@ -90,7 +107,7 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         return projects;
     }
 
-    public async Task<MemoryRecord> CreateMemoryAsync(Guid projectId, ReportMemoryRequest request, string contentText, CancellationToken cancellationToken)
+    public async Task<MemoryRecord> CreateMemoryAsync(Guid projectId, ReportMemoryRequest request, string contentText, string actorId, CancellationToken cancellationToken)
     {
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
@@ -111,12 +128,12 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
             await memoryCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        await InsertVersionAsync(connection, transaction, memoryId, 1, request.Summary, request.Details, request.CodeReferences, contentText, request.CreatedBy, createdAt, cancellationToken);
+        await InsertVersionAsync(connection, transaction, memoryId, 1, request.Summary, request.Details, request.CodeReferences, contentText, request.AgentName!, actorId, createdAt, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new MemoryRecord(memoryId, projectId, request.Type, request.Title, 1, request.Summary, request.Details, request.CodeReferences, contentText, request.CreatedBy, createdAt);
+        return new MemoryRecord(memoryId, projectId, request.Type, request.Title, 1, request.Summary, request.Details, request.CodeReferences, contentText, request.AgentName!, createdAt, actorId);
     }
 
-    public async Task<MemoryRecord> ReviseMemoryAsync(Guid memoryId, ReviseMemoryRequest request, string contentText, CancellationToken cancellationToken)
+    public async Task<MemoryRecord> ReviseMemoryAsync(Guid memoryId, ReviseMemoryRequest request, string contentText, string actorId, CancellationToken cancellationToken)
     {
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
@@ -140,7 +157,7 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         }
 
         var createdAt = DateTimeOffset.UtcNow;
-        await InsertVersionAsync(connection, transaction, memoryId, version, request.Summary, request.Details, request.CodeReferences, contentText, request.CreatedBy, createdAt, cancellationToken);
+        await InsertVersionAsync(connection, transaction, memoryId, version, request.Summary, request.Details, request.CodeReferences, contentText, request.AgentName!, actorId, createdAt, cancellationToken);
         await using (var update = new NpgsqlCommand("UPDATE memories SET current_version = $1 WHERE id = $2;", connection, transaction))
         {
             update.Parameters.AddWithValue(version);
@@ -149,7 +166,7 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return new MemoryRecord(memoryId, projectId, type, title, version, request.Summary, request.Details, request.CodeReferences, contentText, request.CreatedBy, createdAt);
+        return new MemoryRecord(memoryId, projectId, type, title, version, request.Summary, request.Details, request.CodeReferences, contentText, request.AgentName!, createdAt, actorId);
     }
 
     public async Task<MemoryRecord?> GetMemoryAsync(Guid memoryId, CancellationToken cancellationToken)
@@ -174,6 +191,92 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         return await ReadMemoriesAsync(command, cancellationToken);
     }
 
+    public async Task<MemoryFeedbackResult> UpsertFeedbackAsync(Guid memoryId, int version, string actorId, MemoryFeedbackRequest request, CancellationToken cancellationToken)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var versionId = await GetVersionIdAsync(connection, transaction, memoryId, version, cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        await using (var command = new NpgsqlCommand("""
+            INSERT INTO memory_feedback
+                (id, memory_version_id, actor_id, sentiment, reason, comment, search_query, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+            ON CONFLICT (memory_version_id, actor_id) DO UPDATE SET
+                sentiment = EXCLUDED.sentiment,
+                reason = EXCLUDED.reason,
+                comment = EXCLUDED.comment,
+                search_query = EXCLUDED.search_query,
+                updated_at = EXCLUDED.updated_at;
+            """, connection, transaction))
+        {
+            command.Parameters.AddWithValue(Guid.NewGuid());
+            command.Parameters.AddWithValue(versionId);
+            command.Parameters.AddWithValue(actorId);
+            command.Parameters.AddWithValue(request.Sentiment);
+            command.Parameters.AddWithValue(request.Reason);
+            command.Parameters.AddWithValue((object?)request.Comment ?? DBNull.Value);
+            command.Parameters.AddWithValue((object?)request.SearchQuery ?? DBNull.Value);
+            command.Parameters.AddWithValue(now);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        var summary = await GetFeedbackSummaryAsync(connection, transaction, memoryId, version, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new MemoryFeedbackResult(memoryId, version, request.Sentiment, request.Reason, request.Comment, now, summary);
+    }
+
+    public async Task<MemoryFeedbackSummary> DeleteFeedbackAsync(Guid memoryId, int version, string actorId, CancellationToken cancellationToken)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var versionId = await GetVersionIdAsync(connection, transaction, memoryId, version, cancellationToken);
+        await using (var command = new NpgsqlCommand("DELETE FROM memory_feedback WHERE memory_version_id = $1 AND actor_id = $2;", connection, transaction))
+        {
+            command.Parameters.AddWithValue(versionId);
+            command.Parameters.AddWithValue(actorId);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        var summary = await GetFeedbackSummaryAsync(connection, transaction, memoryId, version, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return summary;
+    }
+
+    public async Task<MemoryFeedbackSummary> GetFeedbackSummaryAsync(Guid memoryId, int version, CancellationToken cancellationToken)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        return await GetFeedbackSummaryAsync(connection, null, memoryId, version, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, MemoryFeedbackSummary>> GetCurrentFeedbackSummariesAsync(IReadOnlyList<Guid> memoryIds, CancellationToken cancellationToken)
+    {
+        if (memoryIds.Count == 0) return new Dictionary<Guid, MemoryFeedbackSummary>();
+        await using var command = dataSource.CreateCommand("""
+            SELECT m.id, v.version,
+                   (COUNT(f.id) FILTER (WHERE f.sentiment = 'useful'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.sentiment = 'not_useful'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'incorrect'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'stale'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'irrelevant'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'missing_evidence'))::int
+            FROM memories m
+            JOIN memory_versions v ON v.memory_id = m.id AND v.version = m.current_version
+            LEFT JOIN memory_feedback f ON f.memory_version_id = v.id
+            WHERE m.id = ANY($1)
+            GROUP BY m.id, v.version;
+            """);
+        command.Parameters.AddWithValue(memoryIds.ToArray());
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var summaries = new Dictionary<Guid, MemoryFeedbackSummary>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var summary = ReadFeedbackSummary(reader);
+            summaries[summary.MemoryId] = summary;
+        }
+
+        return summaries;
+    }
+
     private static async Task EnsureProjectExistsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid projectId, CancellationToken cancellationToken)
     {
         await using var command = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1);", connection, transaction);
@@ -182,6 +285,65 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         {
             throw new DomainException("PROJECT_NOT_FOUND", $"Project '{projectId}' was not found.");
         }
+    }
+
+    private static async Task<Guid> GetVersionIdAsync(NpgsqlConnection connection, NpgsqlTransaction? transaction, Guid memoryId, int version, CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand("SELECT id FROM memory_versions WHERE memory_id = $1 AND version = $2;", connection, transaction);
+        command.Parameters.AddWithValue(memoryId);
+        command.Parameters.AddWithValue(version);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is Guid versionId
+            ? versionId
+            : throw new DomainException("MEMORY_VERSION_NOT_FOUND", $"Memory '{memoryId}' version '{version}' was not found.");
+    }
+
+    private static async Task<MemoryFeedbackSummary> GetFeedbackSummaryAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction? transaction,
+        Guid memoryId,
+        int version,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand("""
+            SELECT v.memory_id, v.version,
+                   (COUNT(f.id) FILTER (WHERE f.sentiment = 'useful'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.sentiment = 'not_useful'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'incorrect'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'stale'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'irrelevant'))::int,
+                   (COUNT(f.id) FILTER (WHERE f.reason = 'missing_evidence'))::int
+            FROM memory_versions v
+            LEFT JOIN memory_feedback f ON f.memory_version_id = v.id
+            WHERE v.memory_id = $1 AND v.version = $2
+            GROUP BY v.memory_id, v.version;
+            """, connection, transaction);
+        command.Parameters.AddWithValue(memoryId);
+        command.Parameters.AddWithValue(version);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            throw new DomainException("MEMORY_VERSION_NOT_FOUND", $"Memory '{memoryId}' version '{version}' was not found.");
+        }
+
+        return ReadFeedbackSummary(reader);
+    }
+
+    private static MemoryFeedbackSummary ReadFeedbackSummary(NpgsqlDataReader reader)
+    {
+        var incorrectCount = reader.GetInt32(4);
+        var staleCount = reader.GetInt32(5);
+        var missingEvidenceCount = reader.GetInt32(7);
+        return new MemoryFeedbackSummary(
+            reader.GetGuid(0),
+            reader.GetInt32(1),
+            reader.GetInt32(2),
+            reader.GetInt32(3),
+            incorrectCount,
+            staleCount,
+            reader.GetInt32(6),
+            missingEvidenceCount,
+            incorrectCount + staleCount + missingEvidenceCount > 0);
     }
 
     private static async Task InsertVersionAsync(
@@ -193,14 +355,15 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         JsonElement? details,
         IReadOnlyList<CodeReference> references,
         string contentText,
-        string createdBy,
+        string agentName,
+        string actorId,
         DateTimeOffset createdAt,
         CancellationToken cancellationToken)
     {
         await using var command = new NpgsqlCommand("""
             INSERT INTO memory_versions
-                (id, memory_id, version, summary, details, code_references, content_text, created_by, created_at)
-            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9);
+                (id, memory_id, version, summary, details, code_references, content_text, created_by, actor_id, created_at)
+            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, $10);
             """, connection, transaction);
         command.Parameters.AddWithValue(Guid.NewGuid());
         command.Parameters.AddWithValue(memoryId);
@@ -209,7 +372,8 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
         command.Parameters.AddWithValue(details?.GetRawText() ?? "null");
         command.Parameters.AddWithValue(JsonSerializer.Serialize(references, JsonOptions));
         command.Parameters.AddWithValue(contentText);
-        command.Parameters.AddWithValue(createdBy);
+        command.Parameters.AddWithValue(agentName);
+        command.Parameters.AddWithValue(actorId);
         command.Parameters.AddWithValue(createdAt);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -237,6 +401,7 @@ public sealed class PostgresMemoryRepository(NpgsqlDataSource dataSource) : IMem
             references,
             reader.GetString(8),
             reader.GetString(9),
-            reader.GetFieldValue<DateTimeOffset>(10));
+            reader.GetFieldValue<DateTimeOffset>(10),
+            reader.IsDBNull(11) ? null : reader.GetString(11));
     }
 }

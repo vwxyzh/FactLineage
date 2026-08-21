@@ -6,7 +6,7 @@ using ModelContextProtocol.Server;
 namespace AiDoc.Cloud.Api.Api;
 
 [McpServerToolType]
-public sealed class MemoryTools(MemoryApplication application)
+public sealed class MemoryTools(MemoryApplication application, IHttpContextAccessor httpContextAccessor)
 {
     [McpServerTool(Name = "create_project")]
     [Description("Creates an AI Doc project used to scope memories and searches.")]
@@ -25,9 +25,13 @@ public sealed class MemoryTools(MemoryApplication application)
     [Description("Creates a project memory and indexes its current version for semantic search.")]
     public Task<MemoryWriteResult> ReportMemoryAsync(
         [Description("Project identifier.")] Guid projectId,
-        [Description("Memory report including type, title, summary, details, code references, and author.")] ReportMemoryRequest request,
+        [Description("Memory report including type, title, summary, details, code references, and agentName. Legacy createdBy is accepted as the agent display label.")] ReportMemoryRequest request,
         CancellationToken cancellationToken) =>
-        application.ReportAsync(projectId, request, cancellationToken);
+        application.ReportAsync(
+            projectId,
+            request,
+            ActorIdentity.FromClaims(httpContextAccessor.HttpContext?.User),
+            cancellationToken);
 
     [McpServerTool(Name = "search_memories")]
     [Description("Searches current memory versions within one project using keyword, vector, and semantic retrieval.")]
@@ -45,4 +49,29 @@ public sealed class MemoryTools(MemoryApplication application)
         [Description("Memory identifier.")] Guid memoryId,
         CancellationToken cancellationToken) =>
         application.GetAsync(memoryId, cancellationToken);
+
+    [McpServerTool(Name = "submit_memory_feedback")]
+    [Description("Submits or replaces the authenticated caller's quality feedback for one immutable memory version.")]
+    public Task<MemoryFeedbackResult> SubmitMemoryFeedbackAsync(
+        [Description("Memory identifier.")] Guid memoryId,
+        [Description("Immutable memory version number.")] int version,
+        [Description("useful or not_useful.")] string sentiment,
+        [Description("useful, incorrect, stale, irrelevant, or missing_evidence.")] string reason,
+        [Description("Optional concise correction or context, up to 2000 characters.")] string? comment = null,
+        [Description("Optional search query that produced the result, up to 2000 characters.")] string? searchQuery = null,
+        CancellationToken cancellationToken = default) =>
+        application.SubmitFeedbackAsync(
+            memoryId,
+            version,
+            ActorIdentity.FromClaims(httpContextAccessor.HttpContext?.User),
+            new MemoryFeedbackRequest(sentiment, reason, comment, searchQuery),
+            cancellationToken);
+
+    [McpServerTool(Name = "get_memory_feedback_summary")]
+    [Description("Gets aggregate quality signals and review state for one immutable memory version.")]
+    public Task<MemoryFeedbackSummary> GetMemoryFeedbackSummaryAsync(
+        [Description("Memory identifier.")] Guid memoryId,
+        [Description("Immutable memory version number.")] int version,
+        CancellationToken cancellationToken = default) =>
+        application.GetFeedbackSummaryAsync(memoryId, version, cancellationToken);
 }

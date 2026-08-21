@@ -10,9 +10,11 @@ Use MCP for AI Doc business operations. Do not write directly to PostgreSQL. Dis
 | --- | --- | --- |
 | `create_project` | Create project scope | unique name, optional repository URL |
 | `list_projects` | Discover project IDs | none |
-| `report_memory` | Store immutable memory and search projection | project ID, type, title, summary, details, references, author |
+| `report_memory` | Store immutable memory and search projection | project ID, type, title, summary, details, references, agent display name |
 | `search_memories` | Hybrid semantic search in one project | project ID, query, optional type, limit |
 | `get_memory` | Read current memory and references | memory ID |
+| `submit_memory_feedback` | Submit or replace the caller's version-level quality signal | memory ID, version, sentiment, reason, optional comment/query |
+| `get_memory_feedback_summary` | Read aggregate reasons and review state | memory ID, version |
 
 ## Entra-authenticated local bridge
 
@@ -53,7 +55,7 @@ Use a persistent process; a one-shot pipeline may close stdin before the proxy r
 2. `notifications/initialized`.
 3. `tools/list`.
 
-Require server `AiDoc.Cloud.Api` and all five tools.
+Require server `AiDoc.Cloud.Api` and all seven tools.
 
 ## Project bootstrap
 
@@ -95,7 +97,7 @@ The MCP does not upload file attachments. `report_memory.details` accepts arbitr
       "endLine": 20
     }
   ],
-  "createdBy": "<agent-name>"
+  "agentName": "<agent-name>"
 }
 ```
 
@@ -110,11 +112,22 @@ One memory should represent one independently searchable unit:
 - Include exact error codes, resource types, role names, and commands in `details`.
 - Include the document and controlling source files as code references.
 - Use project-relative paths and valid line ranges.
-- Set `createdBy` to the active agent.
+- Prefer `agentName` for the Agent display label. Legacy `createdBy` is accepted as an alias, but trusted `actorId` is always derived from the Entra token and cannot be supplied by the tool caller.
 
 ## Search before report
 
 Search the cloud project using behavior and error language before reporting. If a memory already owns the concept, revise it when revision tooling is available. Otherwise choose a title and boundary that do not duplicate an existing unit.
+
+## Feedback workflow
+
+Feedback applies to an immutable version. Use `submit_memory_feedback` with `useful/useful` for a helpful result. For not-useful results, choose one structured reason:
+
+- `incorrect`: factual claim is wrong.
+- `stale`: no longer matches current source or runtime.
+- `irrelevant`: did not match this search intent; does not prove the memory is wrong.
+- `missing_evidence`: references are absent or insufficient.
+
+`incorrect`, `stale`, and `missing_evidence` contribute to `needsReview`. Comments are suggestions until source verification. Feedback does not edit memory content, delete versions, or change search score. Use HTTP DELETE when the caller must remove its own current feedback.
 
 ## Upload verification
 
