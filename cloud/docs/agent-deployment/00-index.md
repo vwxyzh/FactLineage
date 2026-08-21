@@ -1,8 +1,8 @@
-# AI Doc Cloud Deployment Knowledge Index
+# FactLineage Cloud Deployment Knowledge Index
 
 ## Agent contract
 
-Use this package when an agent must deploy, repair, validate, operate, or connect to AI Doc Cloud. Repository source and Bicep are authoritative. Concrete resource names and IDs are deployment evidence, not reusable defaults.
+Use this package when an agent must deploy, repair, validate, operate, or connect to FactLineage Cloud. Repository source and Bicep are authoritative. Concrete resource names and IDs are deployment evidence, not reusable defaults.
 
 Hard invariants:
 
@@ -47,10 +47,10 @@ flowchart TD
 | PostgreSQL Entra administrator | [../../infra/postgres-administrator.bicep](../../infra/postgres-administrator.bicep) |
 | Container App identity/configuration | [../../infra/app.bicep](../../infra/app.bicep) |
 | Parameter schema | [../../infra/deploy.parameters.json](../../infra/deploy.parameters.json) |
-| JWT and managed identity | [../../src/AiDoc.Cloud.Api/Program.cs](../../src/AiDoc.Cloud.Api/Program.cs) |
-| PostgreSQL token refresh | [../../src/AiDoc.Cloud.Api/Infrastructure/PostgresDataSourceFactory.cs](../../src/AiDoc.Cloud.Api/Infrastructure/PostgresDataSourceFactory.cs) |
-| Search index/query | [../../src/AiDoc.Cloud.Api/Infrastructure/AzureSearchMemoryIndex.cs](../../src/AiDoc.Cloud.Api/Infrastructure/AzureSearchMemoryIndex.cs) |
-| MCP tools | [../../src/AiDoc.Cloud.Api/Api/MemoryTools.cs](../../src/AiDoc.Cloud.Api/Api/MemoryTools.cs) |
+| JWT and managed identity | [../../src/FactLineage.Cloud.Api/Program.cs](../../src/FactLineage.Cloud.Api/Program.cs) |
+| PostgreSQL token refresh | [../../src/FactLineage.Cloud.Api/Infrastructure/PostgresDataSourceFactory.cs](../../src/FactLineage.Cloud.Api/Infrastructure/PostgresDataSourceFactory.cs) |
+| Search index/query | [../../src/FactLineage.Cloud.Api/Infrastructure/AzureSearchMemoryIndex.cs](../../src/FactLineage.Cloud.Api/Infrastructure/AzureSearchMemoryIndex.cs) |
+| MCP tools | [../../src/FactLineage.Cloud.Api/Api/MemoryTools.cs](../../src/FactLineage.Cloud.Api/Api/MemoryTools.cs) |
 
 ## Verified evidence
 

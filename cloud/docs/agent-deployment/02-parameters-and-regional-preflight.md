@@ -9,13 +9,13 @@ Never deploy from the checked-in placeholder file. Create a Git-ignored local co
 Recommended path:
 
 ```text
-<repo>/.local/aidoc-cloud/deploy.parameters.json
+<repo>/.local/factlineage-cloud/deploy.parameters.json
 ```
 
 Confirm ignore behavior before writing real names or IDs:
 
 ```powershell
-git check-ignore -v .local/aidoc-cloud/deploy.parameters.json
+git check-ignore -v .local/factlineage-cloud/deploy.parameters.json
 ```
 
 Parameter categories:

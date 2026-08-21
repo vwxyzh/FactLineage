@@ -1,4 +1,4 @@
-# AI Doc Azure Three-Day MVP Design
+# FactLineage Azure Three-Day MVP Design
 
 This document describes only the smallest system that can be completed within three days. The goal is to complete the core workflow in which an agent writes project memories, queries those memories, and receives code references, without building production-grade platform capabilities prematurely.
 
@@ -258,7 +258,7 @@ Initial ranking remains BM25, vector retrieval, Reciprocal Rank Fusion, and Sema
 - Logs must not contain bearer tokens, credential-bearing connection strings, or complete memory contents.
 - Logs must not contain feedback comments or search queries; record only feedback reason, version ID, and outcome when operationally necessary.
 
-The Entra App Registration exposes an `access_as_user` delegated scope for interactive agents. Azure workload callers use their own Entra identity; no client secret is required by the AI Doc service.
+The Entra App Registration exposes an `access_as_user` delegated scope for interactive agents. Azure workload callers use their own Entra identity; no client secret is required by the FactLineage service.
 
 ## Configuration
 
@@ -268,7 +268,7 @@ The application requires only the following environment variables:
 | --- | --- |
 | `Cloud__ManagedIdentityClientId` | User-assigned managed identity client ID |
 | `Cloud__TenantId` | Entra tenant ID used for token validation |
-| `Cloud__ApiAudience` | AI Doc API Application ID URI |
+| `Cloud__ApiAudience` | FactLineage API Application ID URI |
 | `Cloud__PostgreSql__Host` | PostgreSQL host; authentication uses an Entra token |
 | `Cloud__PostgreSql__Database` | PostgreSQL database name |
 | `Cloud__PostgreSql__User` | Managed identity principal name |

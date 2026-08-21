@@ -1,4 +1,4 @@
-# AI Doc Azure 三天 MVP 设计
+# FactLineage Azure 三天 MVP 设计
 
 本文只描述 3 天内可以完成的最小系统。目标是跑通“Agent 写入项目记忆、Agent 查询记忆、返回代码引用”闭环，不提前建设生产级平台能力。
 
@@ -258,7 +258,7 @@ sequenceDiagram
 - 日志不记录 Bearer Token、带凭据的连接字符串或完整记忆正文。
 - 日志不记录反馈 comment 或 search query；确有运维需要时只记录反馈原因、版本 ID 和处理结果。
 
-Entra App Registration 为交互式 Agent 暴露 `access_as_user` delegated scope。Azure 工作负载调用方使用自己的 Entra identity；AI Doc 服务不需要 Client Secret。
+Entra App Registration 为交互式 Agent 暴露 `access_as_user` delegated scope。Azure 工作负载调用方使用自己的 Entra identity；FactLineage 服务不需要 Client Secret。
 
 ## 配置
 
@@ -268,7 +268,7 @@ Entra App Registration 为交互式 Agent 暴露 `access_as_user` delegated scop
 | --- | --- |
 | `Cloud__ManagedIdentityClientId` | 用户分配托管标识 Client ID |
 | `Cloud__TenantId` | 用于 Token 校验的 Entra Tenant ID |
-| `Cloud__ApiAudience` | AI Doc API Application ID URI |
+| `Cloud__ApiAudience` | FactLineage API Application ID URI |
 | `Cloud__PostgreSql__Host` | PostgreSQL 主机；认证使用 Entra Token |
 | `Cloud__PostgreSql__Database` | PostgreSQL 数据库名 |
 | `Cloud__PostgreSql__User` | 托管标识主体名称 |

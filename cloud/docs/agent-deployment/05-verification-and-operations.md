@@ -7,9 +7,9 @@ Do not report success until control-plane, identity, data-plane, and MCP checks 
 ## 1. Deployment phases
 
 ```powershell
-az deployment group show -g <rg> -n aidoc-foundation --query properties.provisioningState -o tsv
+az deployment group show -g <rg> -n factlineage-foundation --query properties.provisioningState -o tsv
 az deployment group show -g <rg> -n postgres-entra-administrator --query properties.provisioningState -o tsv
-az deployment group show -g <rg> -n aidoc-application --query properties.provisioningState -o tsv
+az deployment group show -g <rg> -n factlineage-application --query properties.provisioningState -o tsv
 ```
 
 All must be `Succeeded`.

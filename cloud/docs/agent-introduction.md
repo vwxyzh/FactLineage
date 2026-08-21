@@ -1,10 +1,10 @@
-# AI Doc: Project Memory for Software Agents
+# FactLineage: Project Memory for Software Agents
 
 ## Agent contract
 
-Use AI Doc as durable, project-scoped, evidence-backed memory. Search before reconstructing known behavior. Write only after validating source changes or operational facts. Every stored claim must have a clear boundary, current evidence, and enough retrieval language for another agent to rediscover it.
+Use FactLineage as durable, project-scoped, evidence-backed memory. Search before reconstructing known behavior. Write only after validating source changes or operational facts. Every stored claim must have a clear boundary, current evidence, and enough retrieval language for another agent to rediscover it.
 
-AI Doc is not a substitute for source code, tests, or runtime validation. It is the index of verified understanding that helps agents reach those sources efficiently.
+FactLineage is not a substitute for source code, tests, or runtime validation. It is the index of verified understanding that helps agents reach those sources efficiently.
 
 ## Core purpose
 
@@ -15,7 +15,7 @@ Software agents lose context between sessions. Without shared memory, each agent
 3. Rediscovers earlier failures and constraints.
 4. Risks contradicting decisions already validated by another agent.
 
-AI Doc closes that loop:
+FactLineage closes that loop:
 
 ```mermaid
 flowchart LR
@@ -80,7 +80,7 @@ Historical versions created before trusted author auditing can have `actorId: nu
 
 Searchable text combines title, summary, structured details, and reference symbols. Cloud search uses keyword retrieval, embeddings, and semantic ranking. PostgreSQL remains authoritative; Azure AI Search is rebuildable.
 
-## What AI Doc should store
+## What FactLineage should store
 
 Store facts that are expensive to reconstruct and useful across sessions:
 
@@ -96,7 +96,7 @@ Prefer facts shaped like:
 
 > When condition X occurs, component Y performs behavior Z because constraint C applies. Evidence is in source S, and validation V passed.
 
-## What AI Doc should not store
+## What FactLineage should not store
 
 Do not store:
 
@@ -192,7 +192,7 @@ A high-quality memory is:
 
 ## Feedback and quality review
 
-AI Doc feedback is version-scoped quality evidence, not a popularity counter. The UI may present thumbs up and thumbs down, but agents use structured meanings:
+FactLineage feedback is version-scoped quality evidence, not a popularity counter. The UI may present thumbs up and thumbs down, but agents use structured meanings:
 
 - `useful`: the version helped complete or understand the task.
 - `incorrect`: the version contains a false claim.
@@ -232,7 +232,7 @@ For a Markdown knowledge document, include the full body explicitly:
 }
 ```
 
-A code reference alone does not upload the document because cloud AI Doc cannot read the caller's filesystem.
+A code reference alone does not upload the document because FactLineage Cloud cannot read the caller's filesystem.
 
 ## Tool behavior
 
@@ -309,7 +309,7 @@ Task: fix a cloud deployment that fails while configuring database identity.
 
 ## Current product boundaries
 
-AI Doc does not yet automatically:
+FactLineage does not yet automatically:
 
 - Monitor repository commits.
 - Detect stale references.
@@ -321,7 +321,7 @@ AI Doc does not yet automatically:
 
 Agents remain responsible for source verification, conflict awareness, and memory quality.
 
-## Completion checklist for an AI Doc-aware agent
+## Completion checklist for a FactLineage-aware agent
 
 - [ ] Correct project discovered.
 - [ ] Relevant memory searched before broad reconstruction.

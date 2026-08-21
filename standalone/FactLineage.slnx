@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FactLineage.Cli/FactLineage.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FactLineage.Cli.Tests/FactLineage.Cli.Tests.csproj" />
+  </Folder>
+</Solution>

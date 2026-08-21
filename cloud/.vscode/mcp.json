@@ -1,10 +1,10 @@
 {
   "servers": {
-    "aidoc-cloud": {
+    "factlineage-cloud": {
       "type": "http",
-      "url": "${env:AIDOC_CLOUD_MCP_URL}",
+      "url": "${env:FACTLINEAGE_CLOUD_MCP_URL}",
       "headers": {
-        "Authorization": "Bearer ${env:AIDOC_CLOUD_TOKEN}"
+        "Authorization": "Bearer ${env:FACTLINEAGE_CLOUD_TOKEN}"
       }
     }
   }

@@ -4,7 +4,7 @@
 
 Keep two identity planes separate:
 
-- **Inbound:** users, IDE agents, or workloads call HTTP/MCP using an Entra token for the AI Doc API application.
+- **Inbound:** users, IDE agents, or workloads call HTTP/MCP using an Entra token for the FactLineage API application.
 - **Outbound:** Container Apps calls Azure dependencies with one user-assigned managed identity through `DefaultAzureCredential`.
 
 Never add an access-key fallback.

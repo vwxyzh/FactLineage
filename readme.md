@@ -1,11 +1,11 @@
-# AI Doc
+# FactLineage
 
-AI Doc is a long-term project memory system for AI agents. It continuously records the features, interfaces, implementation locations, and evolution history of a codebase, enabling agents to quickly restore context across sessions and analyze or modify a project based on traceable facts.
+FactLineage is a long-term project memory system for AI agents. It continuously records the features, interfaces, implementation locations, and evolution history of a codebase, enabling agents to quickly restore context across sessions and analyze or modify a project based on traceable facts.
 
 The current implementation goal is to complete the core workflow within three days:
 
-- [AI Doc Standalone CLI Architecture](standalone-architecture.md): requires no service deployment and is suitable for local agents and individual developers.
-- [AI Doc Azure Three-Day MVP Architecture](azure-architecture.md): designed for teams that need remote access and shared data.
+- [FactLineage Standalone CLI Architecture](standalone-architecture.md): requires no service deployment and is suitable for local agents and individual developers.
+- [FactLineage Azure Three-Day MVP Architecture](azure-architecture.md): designed for teams that need remote access and shared data.
 
 ## Goals
 

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AI Doc turns verified code understanding into durable, traceable project knowledge.">
-  <title>AI Doc | Verifiable Project Knowledge</title>
+  <meta name="description" content="FactLineage turns verified code understanding into durable, traceable project knowledge.">
+  <title>FactLineage | Verifiable Project Knowledge</title>
   <style>
     :root {
       --paper: #f3f1eb;
@@ -426,7 +426,7 @@
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="topbar">
-    <a class="brand" href="#top" aria-label="Back to AI Doc overview"><span class="brand-mark">AD</span><span>AI Doc <small>/ VERIFIABLE PROJECT KNOWLEDGE</small></span></a>
+    <a class="brand" href="#top" aria-label="Back to FactLineage overview"><span class="brand-mark">FL</span><span>FactLineage <small>/ VERIFIABLE PROJECT KNOWLEDGE</small></span></a>
     <nav class="nav" aria-label="Page navigation">
       <a href="#essence">Document</a><a href="#value">Core value</a><a href="#record">Anatomy</a><a href="#lifecycle">Lifecycle</a><a href="#impact">Agent impact</a><a href="#runtime">Runtime</a><a href="#cli">CLI</a>
     </nav>
@@ -437,8 +437,8 @@
       <div>
         <p class="eyebrow">What survives the session</p>
         <h1>A document is not a file. It is <em>understanding that can travel.</em></h1>
-        <p class="hero-lede">AI Doc turns verified code understanding into durable project knowledge: scoped, attributable, versioned, and always connected back to source evidence.</p>
-        <div class="hero-actions"><a class="button" href="#essence">Define the document <span aria-hidden="true">↓</span></a><a class="button secondary" href="#value">See AI Doc's value</a></div>
+        <p class="hero-lede">FactLineage turns verified code understanding into durable project knowledge: scoped, attributable, versioned, and always connected back to source evidence.</p>
+        <div class="hero-actions"><a class="button" href="#essence">Define the document <span aria-hidden="true">↓</span></a><a class="button secondary" href="#value">See FactLineage's value</a></div>
       </div>
       <div class="document-visual" aria-label="Anatomy of a verifiable document">
         <article class="document-card">
@@ -467,9 +467,9 @@
     </section>
 
     <section class="section dark" id="value">
-      <div class="section-heading"><div><p class="eyebrow">AI Doc's core value</p><h2>Verified understanding that survives the session.</h2></div><p>AI Doc is not a chat archive and not another folder of prose. It is a version ledger for project understanding, designed so the next agent can inherit what was learned without inheriting blind trust.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">FactLineage's core value</p><h2>Verified understanding that survives the session.</h2></div><p>FactLineage is not a chat archive and not another folder of prose. It is a version ledger for project understanding, designed so the next agent can inherit what was learned without inheriting blind trust.</p></div>
       <div class="core-value">
-        <div class="ledger-statement"><p>Code stays the source of truth. AI Doc preserves the <strong>verified interpretation</strong> needed to act on it.</p></div>
+        <div class="ledger-statement"><p>Code stays the source of truth. FactLineage preserves the <strong>verified interpretation</strong> needed to act on it.</p></div>
         <div class="value-list">
           <article class="value-item"><span>01</span><div><h3>Carry understanding forward</h3><p>Turn analysis that would disappear with a context window into durable project knowledge.</p></div></article>
           <article class="value-item"><span>02</span><div><h3>Keep trust inspectable</h3><p>Every code-related conclusion can point back to a repository, commit, file, symbol, and line range.</p></div></article>
@@ -491,7 +491,7 @@
     </section>
 
     <section class="section dark" id="lifecycle">
-      <div class="section-heading"><div><p class="eyebrow">Knowledge lifecycle</p><h2>From code fact to the next verified action.</h2></div><p>AI Doc closes a loop: understand the code, verify the claim, preserve it with evidence, retrieve it by task intent, and revalidate it when the project changes.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">Knowledge lifecycle</p><h2>From code fact to the next verified action.</h2></div><p>FactLineage closes a loop: understand the code, verify the claim, preserve it with evidence, retrieve it by task intent, and revalidate it when the project changes.</p></div>
       <div class="flow">
         <article class="flow-step"><code>STEP 01</code><h3>Understand</h3><p>An agent identifies a behavior, contract, or decision in the repository.</p></article>
         <article class="flow-step"><code>STEP 02</code><h3>Verify</h3><p>File, symbol, line, project boundary, and Git state are checked.</p></article>
@@ -518,7 +518,7 @@
         <span class="runtime-state">LOCAL / NO DAEMON / V0.1.0</span>
       </div>
       <div class="runtime-panel active" id="runtime-local" role="tabpanel">
-        <div class="runtime-diagram"><div class="runtime-column"><div class="node primary"><strong>Agent / User / Script</strong><small>argv · stdin · JSON</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node primary"><strong>aidoc CLI</strong><small>short-lived process</small></div><div class="node"><strong>Application services</strong><small>project · memory · maintenance</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node storage"><strong>SQLite + FTS5</strong><small>authoritative local store</small></div><div class="node"><strong>Git + local embedding</strong><small>evidence and retrieval</small></div></div></div>
+        <div class="runtime-diagram"><div class="runtime-column"><div class="node primary"><strong>Agent / User / Script</strong><small>argv · stdin · JSON</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node primary"><strong>factlineage CLI</strong><small>short-lived process</small></div><div class="node"><strong>Application services</strong><small>project · memory · maintenance</small></div></div><div class="arrow" aria-hidden="true">→</div><div class="runtime-column"><div class="node storage"><strong>SQLite + FTS5</strong><small>authoritative local store</small></div><div class="node"><strong>Git + local embedding</strong><small>evidence and retrieval</small></div></div></div>
         <aside class="runtime-notes"><div class="runtime-note"><strong>No resident service</strong><p>Each command starts, runs, and exits.</p></div><div class="runtime-note"><strong>Local first</strong><p>Knowledge and vectors stay on the machine.</p></div><div class="runtime-note"><strong>Portable</strong><p>A self-contained Windows executable.</p></div></aside>
       </div>
       <div class="runtime-panel" id="runtime-cloud" role="tabpanel" hidden>
@@ -530,21 +530,21 @@
     <section class="section dark" id="cli">
       <div class="section-heading"><div><p class="eyebrow">Implemented interface</p><h2>Knowledge operations made explicit.</h2></div><p>The CLI makes the lifecycle machine-readable: report a verified record, revise it without losing history, search within an explicit project scope, and follow evidence back to code.<br><a class="reference-link" href="command-line-reference.md">Open the full command-line reference →</a></p></div>
       <div class="cli-shell">
-        <div class="cli-head"><span>AIDOC / POWERSHELL</span><span>schemaVersion: 1</span></div>
+        <div class="cli-head"><span>FACTLINEAGE / POWERSHELL</span><span>schemaVersion: 1</span></div>
         <div class="cli-tabs" role="tablist" aria-label="CLI examples"><button class="cli-tab active" type="button" role="tab" aria-selected="true" data-cli="report">Report</button><button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="search">Retrieve</button><button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="history">History</button><button class="cli-tab" type="button" role="tab" aria-selected="false" data-cli="doctor">Verify store</button></div>
         <div class="cli-body">
           <button class="copy-button" type="button" aria-label="Copy current command" title="Copy current command">Copy</button>
-          <pre class="cli-example active" id="cli-report" data-command="aidoc memory report --project my-api --file knowledge.json --format json"><span class="prompt">PS&gt;</span> aidoc memory report \
+          <pre class="cli-example active" id="cli-report" data-command="factlineage memory report --project my-api --file knowledge.json --format json"><span class="prompt">PS&gt;</span> factlineage memory report \
   <span class="argument">--project my-api</span> \
   --file knowledge.json --format json
 
 { "schemaVersion": 1, "data": { "version": 1 } }</pre>
-          <pre class="cli-example" id="cli-search" data-command="aidoc search &quot;Where is inventory validated?&quot; --project my-api --limit 5 --format json"><span class="prompt">PS&gt;</span> aidoc search \
+          <pre class="cli-example" id="cli-search" data-command="factlineage search &quot;Where is inventory validated?&quot; --project my-api --limit 5 --format json"><span class="prompt">PS&gt;</span> factlineage search \
   <span class="argument">"Where is inventory validated?"</span> \
   --project my-api --limit 5 --format json</pre>
-          <pre class="cli-example" id="cli-history" data-command="aidoc memory history &lt;memory-id&gt; --format json"><span class="prompt">PS&gt;</span> aidoc memory history \
+          <pre class="cli-example" id="cli-history" data-command="factlineage memory history &lt;memory-id&gt; --format json"><span class="prompt">PS&gt;</span> factlineage memory history \
   <span class="argument">&lt;memory-id&gt;</span> --format json</pre>
-          <pre class="cli-example" id="cli-doctor" data-command="aidoc doctor --format json"><span class="prompt">PS&gt;</span> aidoc doctor --format json
+          <pre class="cli-example" id="cli-doctor" data-command="factlineage doctor --format json"><span class="prompt">PS&gt;</span> factlineage doctor --format json
 
 { "schemaVersion": 1, "data": { "integrityCheckPassed": true } }</pre>
         </div>
@@ -552,7 +552,7 @@
     </section>
   </main>
 
-  <footer><div><strong>AI Doc</strong><p>Code is the source of truth. AI Doc is the durable, inspectable record of what has been verified about it.</p></div><code>CLAIM · CONTEXT · EVIDENCE · IDENTITY · HISTORY</code></footer>
+  <footer><div><strong>FactLineage</strong><p>Code is the source of truth. FactLineage is the durable, inspectable record of what has been verified about it.</p></div><code>CLAIM · CONTEXT · EVIDENCE · IDENTITY · HISTORY</code></footer>
 
   <script>
     const runtimeTabs = document.querySelectorAll('[data-runtime]');

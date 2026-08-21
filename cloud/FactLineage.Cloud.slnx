@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FactLineage.Cloud.Api/FactLineage.Cloud.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FactLineage.Cloud.Api.Tests/FactLineage.Cloud.Api.Tests.csproj" />
+  </Folder>
+</Solution>

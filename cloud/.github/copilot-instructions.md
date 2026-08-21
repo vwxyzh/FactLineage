@@ -1,4 +1,4 @@
-# AI Doc Cloud development
+# FactLineage Cloud development
 
 - Use `DefaultAzureCredential` and `TokenCredential` for every Azure SDK client.
 - Keep Azure resource names in Bicep parameters and runtime endpoints in `Cloud__*` configuration.

@@ -1,6 +1,6 @@
-# AI Doc 单机 CLI 架构设计
+# FactLineage 单机 CLI 架构设计
 
-本文描述 AI Doc 的单机版本。目标是在不部署服务、不运行常驻进程的情况下，让本机 Agent 通过 CLI 写入和查询项目长时记忆。
+本文描述 FactLineage 的单机版本。目标是在不部署服务、不运行常驻进程的情况下，让本机 Agent 通过 CLI 写入和查询项目长时记忆。
 
 ## 设计目标
 
@@ -37,7 +37,7 @@
 
 ```mermaid
 flowchart LR
-    A[Agent / 用户 / 脚本] -->|执行命令<br/>stdin / argv| C[aidoc CLI]
+    A[Agent / 用户 / 脚本] -->|执行命令<br/>stdin / argv| C[factlineage CLI]
 
     subgraph Process[单次 CLI 进程]
         C --> S[Application Services]
@@ -74,8 +74,8 @@ MVP 不引入 Web 框架、ORM、依赖注入框架或任务队列。
 
 ```text
 src/
-  AiDoc.Cli/
-    AiDoc.Cli.csproj
+  FactLineage.Cli/
+    FactLineage.Cli.csproj
     Program.cs                  组合根和进程退出码
     Commands/                   命令、参数和处理器
     Output/                     JSON 和文本渲染
@@ -94,7 +94,7 @@ src/
       GitInspector.cs           Git 仓库检查
       OnnxEmbeddingProvider.cs  本地 ONNX Embedding 推理
 tests/
-  AiDoc.Cli.Tests/
+  FactLineage.Cli.Tests/
 ```
 
 依赖方向固定为 `cli -> application -> domain`。`infrastructure` 实现应用层需要的接口，但 CLI 命令不能直接执行 SQL。这样以后添加其他入口时，可以复用应用服务。
@@ -104,8 +104,8 @@ tests/
 Windows 默认目录：
 
 ```text
-%LOCALAPPDATA%\AI Doc\
-  aidoc.db
+%LOCALAPPDATA%\FactLineage\
+  factlineage.db
   appsettings.json
   models\
     multilingual-e5-small\
@@ -113,7 +113,7 @@ Windows 默认目录：
   backups\
 ```
 
-其他系统可使用操作系统约定的用户数据目录。用户可通过 `AIDOC_HOME` 覆盖默认位置，便于测试、便携运行或保存到加密磁盘。
+其他系统可使用操作系统约定的用户数据目录。用户可通过 `FACTLINEAGE_HOME` 覆盖默认位置，便于测试、便携运行或保存到加密磁盘。迁移期间，未设置新变量时仍支持 `AIDOC_HOME`，并继续打开已有的 `%LOCALAPPDATA%\AI Doc\aidoc.db`。
 
 数据库、配置和日志不得创建在被记录的项目仓库中，避免误提交。
 
@@ -193,13 +193,13 @@ Windows 默认目录：
 ### 项目
 
 ```powershell
-aidoc project add --name my-api --path D:\code\my-api
-aidoc project update my-api --new-name orders-api
-aidoc project update orders-api --path D:\code\orders-api --remote-url https://example.com/orders-api.git
-aidoc project show orders-api --format json
-aidoc project list --name orders-api --name shared-lib --format json
-aidoc project list --format json
-aidoc project remove orders-api --yes
+factlineage project add --name my-api --path D:\code\my-api
+factlineage project update my-api --new-name orders-api
+factlineage project update orders-api --path D:\code\orders-api --remote-url https://example.com/orders-api.git
+factlineage project show orders-api --format json
+factlineage project list --name orders-api --name shared-lib --format json
+factlineage project list --format json
+factlineage project remove orders-api --yes
 ```
 
 - `project add` 创建项目；`--name` 和规范化后的 `--path` 必填，`--remote-url` 可选。
@@ -211,13 +211,13 @@ aidoc project remove orders-api --yes
 ### 记忆
 
 ```powershell
-aidoc memory report --project my-api --file memory.json
-aidoc memory report --project my-api --stdin
-aidoc memory import --project my-api --directory D:\imports\memories --format json
-aidoc memory revise <memory-id> --file memory.json
-aidoc memory get <memory-id> --format json
-aidoc memory export <memory-id> --format json
-aidoc memory history <memory-id> --format json
+factlineage memory report --project my-api --file memory.json
+factlineage memory report --project my-api --stdin
+factlineage memory import --project my-api --directory D:\imports\memories --format json
+factlineage memory revise <memory-id> --file memory.json
+factlineage memory get <memory-id> --format json
+factlineage memory export <memory-id> --format json
+factlineage memory history <memory-id> --format json
 ```
 
 `report` 创建记忆和版本 1；`revise` 只追加新版本，不覆盖旧内容。
@@ -229,10 +229,10 @@ aidoc memory history <memory-id> --format json
 ### 查询
 
 ```powershell
-aidoc search "用户登录接口如何实现" --project my-api --format json
-aidoc search "认证模型" --project my-api --project shared-lib --format json
-aidoc search "弃用接口" --all-projects --type api --limit 20 --format json
-aidoc search "POST /login password" --project my-api --type api --limit 5
+factlineage search "用户登录接口如何实现" --project my-api --format json
+factlineage search "认证模型" --project my-api --project shared-lib --format json
+factlineage search "弃用接口" --all-projects --type api --limit 20 --format json
+factlineage search "POST /login password" --project my-api --type api --limit 5
 ```
 
 查询必须显式选择范围：传入一个或多个可重复的 `--project`，或者传入 `--all-projects`，两种方式互斥。没有选择范围时返回 `PROJECT_SCOPE_REQUIRED`；指定列表中任何项目不存在时整体返回 `PROJECT_NOT_FOUND`。`--limit` 是合并排序后的全局上限，不是每个项目的上限。
@@ -242,10 +242,10 @@ aidoc search "POST /login password" --project my-api --type api --limit 5
 ### 维护
 
 ```powershell
-aidoc doctor --format json
-aidoc backup
-aidoc embedding backfill --project my-api
-aidoc version
+factlineage doctor --format json
+factlineage backup
+factlineage embedding backfill --project my-api
+factlineage version
 ```
 
 `doctor` 检查数据库完整性、迁移版本、项目路径、Git 可用性和 Embedding 配置，不修改数据。
@@ -345,7 +345,7 @@ sequenceDiagram
     C-->>A: JSON 结果
 ```
 
-写入和修订时，CLI 使用 `multilingual-e5-small` 为标题、摘要、详情和代码引用生成 Embedding。模型文件存放在 `AIDOC_HOME\models\multilingual-e5-small`；首次使用由 `aidoc embedding model download` 下载，或由用户离线放置。Embedding 失败不能阻止记忆写入，此时保存 `embedding=NULL` 并在结果中返回 `embeddingStatus="pending"`，之后通过 `embedding backfill` 补齐。
+写入和修订时，CLI 使用 `multilingual-e5-small` 为标题、摘要、详情和代码引用生成 Embedding。模型文件存放在 `FACTLINEAGE_HOME\models\multilingual-e5-small`；首次使用由 `factlineage embedding model download` 下载，或由用户离线放置。Embedding 失败不能阻止记忆写入，此时保存 `embedding=NULL` 并在结果中返回 `embeddingStatus="pending"`，之后通过 `embedding backfill` 补齐。
 
 ## 检索设计
 
@@ -420,15 +420,15 @@ $$
 - 调用 Git 时使用参数数组，不拼接 Shell 命令字符串。
 - `project remove`、恢复备份等破坏性操作必须显式确认，并在一个事务内完成级联删除。
 
-单机版的信任边界是当前操作系统用户，不解决同一账户下恶意进程访问数据库的问题。高敏感项目应将 `AIDOC_HOME` 放在加密磁盘中。
+单机版的信任边界是当前操作系统用户，不解决同一账户下恶意进程访问数据库的问题。高敏感项目应将 `FACTLINEAGE_HOME` 放在加密磁盘中。
 
 ## 备份与恢复
 
-- `aidoc backup` 使用 SQLite Backup API 创建一致性快照。
+- `factlineage backup` 使用 SQLite Backup API 创建一致性快照。
 - 备份文件名包含 UTC 时间和 schema 版本。
 - 默认保留最近 7 个备份，超出后按时间删除。
 - 自动迁移前必须创建备份。
-- 恢复通过 `aidoc restore <backup-file> --yes` 执行，并先备份当前数据库。
+- 恢复通过 `factlineage restore <backup-file> --yes` 执行，并先备份当前数据库。
 - `doctor` 使用 `PRAGMA integrity_check` 验证数据库。
 
 ## 日志
@@ -446,24 +446,24 @@ $$
 ### 开发方式
 
 ```powershell
-dotnet run --project src/AiDoc.Cli -- version
+dotnet run --project src/FactLineage.Cli -- version
 dotnet test
-aidoc version
+factlineage version
 ```
 
 ### 用户分发
 
-使用 .NET 自包含单文件发布生成 `aidoc.exe`：
+使用 .NET 自包含单文件发布生成 `factlineage.exe`：
 
 ```powershell
-dotnet publish src/AiDoc.Cli -c Release -r win-x64 `
+dotnet publish src/FactLineage.Cli -c Release -r win-x64 `
   --self-contained true -p:PublishSingleFile=true
 ```
 
 发布包包含：
 
 ```text
-aidoc.exe
+factlineage.exe
 README.md
 LICENSE
 ```
@@ -514,7 +514,7 @@ LICENSE
 - [ ] 混合检索可返回关键词不重叠但语义相近的记忆，且精确代码路径和符号查询仍由 FTS5 命中。
 - [ ] 并发修订不会产生重复版本号。
 - [ ] 数据库可通过 CLI 备份、检查和恢复。
-- [ ] `aidoc.exe` 能在未安装 .NET Runtime 的 Windows 环境运行。
+- [ ] `factlineage.exe` 能在未安装 .NET Runtime 的 Windows 环境运行。
 
 ## 迁移到服务版
 

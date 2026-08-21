@@ -1,6 +1,6 @@
-# AI Doc Cloud
+# FactLineage Cloud
 
-AI Doc Cloud is the .NET 10 HTTP and MCP service described in the Azure three-day MVP design. PostgreSQL remains the system of record, while Azure AI Search provides keyword, vector, and semantic retrieval.
+FactLineage Cloud is the .NET 10 HTTP and MCP service described in the Azure three-day MVP design. PostgreSQL remains the system of record, while Azure AI Search provides keyword, vector, and semantic retrieval.
 
 Agents new to the product should start with [docs/agent-introduction.md](docs/agent-introduction.md).
 
@@ -29,8 +29,8 @@ Memory writes persist two author dimensions: `actorId` is derived from trusted E
 
 ```text
 cloud
-  src/AiDoc.Cloud.Api       ASP.NET Core HTTP and MCP service
-  tests/AiDoc.Cloud.Api.Tests
+  src/FactLineage.Cloud.Api       ASP.NET Core HTTP and MCP service
+  tests/FactLineage.Cloud.Api.Tests
   infra/foundation.bicep    Azure resources and RBAC
   infra/postgres-administrator.bicep
   infra/app.bicep           Container App and runtime configuration
@@ -75,8 +75,8 @@ No local Docker daemon is required. Role assignment propagation can take several
 ## Local build and test
 
 ```powershell
-dotnet build cloud/AiDoc.Cloud.slnx
-dotnet test cloud/AiDoc.Cloud.slnx
+dotnet build cloud/FactLineage.Cloud.slnx
+dotnet test cloud/FactLineage.Cloud.slnx
 ```
 
 Running the API locally requires the `Cloud__*` configuration values used in [app.bicep](infra/app.bicep). `DefaultAzureCredential` uses the signed-in developer identity outside Azure.
@@ -85,7 +85,7 @@ Running the API locally requires the `Cloud__*` configuration values used in [ap
 
 | Operation | Endpoint |
 | --- | --- |
-| Discover MCP and Entra configuration | `GET /.well-known/aidoc-mcp.json` |
+| Discover MCP and Entra configuration | `GET /.well-known/factlineage-mcp.json` |
 | Process health | `GET /health` |
 | Create project | `POST /v1/projects` |
 | List projects | `GET /v1/projects` |
@@ -112,4 +112,6 @@ az account get-access-token `
   --output tsv
 ```
 
-For VS Code, set `AIDOC_CLOUD_MCP_URL` to the deployed `/mcp` URL and `AIDOC_CLOUD_TOKEN` to that short-lived token before starting the server configured in [.vscode/mcp.json](.vscode/mcp.json).
+The legacy `GET /.well-known/aidoc-mcp.json` route remains available during migration.
+
+For VS Code, set `FACTLINEAGE_CLOUD_MCP_URL` to the deployed `/mcp` URL and `FACTLINEAGE_CLOUD_TOKEN` to that short-lived token before starting the server configured in [.vscode/mcp.json](.vscode/mcp.json).

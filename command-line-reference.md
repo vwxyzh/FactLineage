@@ -1,13 +1,13 @@
-# AI Doc Command-Line Reference
+# FactLineage Command-Line Reference
 
-This document describes the arguments and options supported by the standalone AI Doc CLI.
+This document describes the arguments and options supported by the standalone FactLineage CLI.
 
 ## Invocation
 
 Use the installed executable:
 
 ```powershell
-aidoc <command> [arguments] [options]
+factlineage <command> [arguments] [options]
 ```
 
 Notation used in this reference:
@@ -27,16 +27,19 @@ Notation used in this reference:
 Command help is also available through the `help` command:
 
 ```powershell
-aidoc help
-aidoc help project add --format json
-aidoc memory report --help --format yaml
+factlineage help
+factlineage help project add --format json
+factlineage memory report --help --format yaml
 ```
 
 ## Environment
 
 | Variable | Description |
 | --- | --- |
-| `AIDOC_HOME` | Overrides the directory containing `aidoc.db`, models, and backups. On Windows, the default is `%LOCALAPPDATA%\AI Doc`. |
+| `FACTLINEAGE_HOME` | Overrides the directory containing `factlineage.db`, models, and backups. On Windows, the default is `%LOCALAPPDATA%\FactLineage`. |
+| `AIDOC_HOME` | Legacy fallback used only when `FACTLINEAGE_HOME` is unset. Existing `aidoc.db` databases remain supported. |
+
+When neither variable is set, FactLineage reuses `%LOCALAPPDATA%\AI Doc\aidoc.db` if that legacy database exists; otherwise it creates `%LOCALAPPDATA%\FactLineage\factlineage.db`.
 
 ## Project commands
 
@@ -45,19 +48,19 @@ aidoc memory report --help --format yaml
 Registers an existing local project directory.
 
 ```powershell
-aidoc project add --name <name> --path <path> [--remote-url <url>] [--format <format>]
+factlineage project add --name <name> --path <path> [--remote-url <url>] [--format <format>]
 ```
 
 | Parameter | Required | Description |
 | --- | --- | --- |
-| `--name <name>` | Yes | Unique project name in the local AI Doc database. |
-| `--path <path>` | Yes | Existing project directory. AI Doc stores its normalized absolute path. |
+| `--name <name>` | Yes | Unique project name in the local FactLineage database. |
+| `--path <path>` | Yes | Existing project directory. FactLineage stores its normalized absolute path. |
 | `--remote-url <url>` | No | Optional Git remote URL recorded with the project. |
 
 Example:
 
 ```powershell
-aidoc project add --name orders-api --path D:\code\orders-api --format json
+factlineage project add --name orders-api --path D:\code\orders-api --format json
 ```
 
 ### `project update`
@@ -65,7 +68,7 @@ aidoc project add --name orders-api --path D:\code\orders-api --format json
 Updates one registered project without changing its project ID. Provide at least one change option.
 
 ```powershell
-aidoc project update <name> [--new-name <name>] [--path <path>] [--remote-url <url> | --clear-remote-url] [--format <format>]
+factlineage project update <name> [--new-name <name>] [--path <path>] [--remote-url <url> | --clear-remote-url] [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -79,7 +82,7 @@ aidoc project update <name> [--new-name <name>] [--path <path>] [--remote-url <u
 Example:
 
 ```powershell
-aidoc project update orders-api --new-name orders-service --path D:\code\orders-service
+factlineage project update orders-api --new-name orders-service --path D:\code\orders-service
 ```
 
 ### `project list`
@@ -87,7 +90,7 @@ aidoc project update orders-api --new-name orders-service --path D:\code\orders-
 Lists all projects, or selected projects in the order requested.
 
 ```powershell
-aidoc project list [--name <name> ...] [--format <format>]
+factlineage project list [--name <name> ...] [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -97,7 +100,7 @@ aidoc project list [--name <name> ...] [--format <format>]
 Example:
 
 ```powershell
-aidoc project list --name orders-api --name shared-lib --format json
+factlineage project list --name orders-api --name shared-lib --format json
 ```
 
 If any requested project does not exist, the command fails without returning a partial list.
@@ -107,7 +110,7 @@ If any requested project does not exist, the command fails without returning a p
 Returns one registered project.
 
 ```powershell
-aidoc project show <name> [--format <format>]
+factlineage project show <name> [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -119,7 +122,7 @@ aidoc project show <name> [--format <format>]
 Removes a project and all associated memories, versions, search documents, and embeddings. It does not delete source files.
 
 ```powershell
-aidoc project remove <name> --yes [--format <format>]
+factlineage project remove <name> --yes [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -134,7 +137,7 @@ aidoc project remove <name> --yes [--format <format>]
 Creates a memory and immutable version 1 from a JSON document.
 
 ```powershell
-aidoc memory report --project <name> (--file <path> | --stdin) [--allow-missing-references] [--format <format>]
+factlineage memory report --project <name> (--file <path> | --stdin) [--allow-missing-references] [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -147,7 +150,7 @@ aidoc memory report --project <name> (--file <path> | --stdin) [--allow-missing-
 Example:
 
 ```powershell
-aidoc memory report --project orders-api --file .\memory.json --format json
+factlineage memory report --project orders-api --file .\memory.json --format json
 ```
 
 ### `memory import`
@@ -155,7 +158,7 @@ aidoc memory report --project orders-api --file .\memory.json --format json
 Recursively imports `.json` memory report documents from a directory.
 
 ```powershell
-aidoc memory import --project <name> --directory <path> [--allow-missing-references] [--format <format>]
+factlineage memory import --project <name> --directory <path> [--allow-missing-references] [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -171,7 +174,7 @@ Files are processed in stable relative-path order. Each file uses a separate tra
 Appends a new immutable version to an existing memory.
 
 ```powershell
-aidoc memory revise <memory-id> (--file <path> | --stdin) [--allow-missing-references] [--format <format>]
+factlineage memory revise <memory-id> (--file <path> | --stdin) [--allow-missing-references] [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -186,7 +189,7 @@ aidoc memory revise <memory-id> (--file <path> | --stdin) [--allow-missing-refer
 Returns a memory and its current version.
 
 ```powershell
-aidoc memory get <memory-id> [--format <format>]
+factlineage memory get <memory-id> [--format <format>]
 ```
 
 ### `memory export`
@@ -194,7 +197,7 @@ aidoc memory get <memory-id> [--format <format>]
 Exports the current version as a reusable `memory report` document.
 
 ```powershell
-aidoc memory export <memory-id> [--format <format>]
+factlineage memory export <memory-id> [--format <format>]
 ```
 
 The returned `document` contains `type`, `title`, `summary`, `details`, `codeReferences`, and `createdBy`.
@@ -204,7 +207,7 @@ The returned `document` contains `type`, `title`, `summary`, `details`, `codeRef
 Returns every immutable version of a memory in version order.
 
 ```powershell
-aidoc memory history <memory-id> [--format <format>]
+factlineage memory history <memory-id> [--format <format>]
 ```
 
 ## Memory JSON input
@@ -268,7 +271,7 @@ Code reference constraints:
 Performs hybrid FTS5 keyword and local semantic retrieval.
 
 ```powershell
-aidoc search <query> (--project <name> ... | --all-projects) [--type <type>] [--limit <count>] [--format <format>]
+factlineage search <query> (--project <name> ... | --all-projects) [--type <type>] [--limit <count>] [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -284,9 +287,9 @@ Exactly one search scope is required: one or more `--project` options, or `--all
 Examples:
 
 ```powershell
-aidoc search "How is authentication implemented?" --project web-api --limit 5 --format json
-aidoc search "deprecated endpoint" --project web-api --project shared-lib --type api
-aidoc search "MemoryService.Search" --all-projects
+factlineage search "How is authentication implemented?" --project web-api --limit 5 --format json
+factlineage search "deprecated endpoint" --project web-api --project shared-lib --type api
+factlineage search "MemoryService.Search" --all-projects
 ```
 
 Each result includes `projectId`, `projectName`, the memory, its current version, and a normalized relevance `score`.
@@ -295,10 +298,10 @@ Each result includes `projectId`, `projectName`, the memory, its current version
 
 ### `embedding model download`
 
-Downloads the `multilingual-e5-small` ONNX model and SentencePiece tokenizer into `AIDOC_HOME`.
+Downloads the `multilingual-e5-small` ONNX model and SentencePiece tokenizer into `FACTLINEAGE_HOME`.
 
 ```powershell
-aidoc embedding model download [--format <format>]
+factlineage embedding model download [--format <format>]
 ```
 
 ### `embedding backfill`
@@ -306,7 +309,7 @@ aidoc embedding model download [--format <format>]
 Generates missing or outdated embeddings for all memory versions in one project.
 
 ```powershell
-aidoc embedding backfill --project <name> [--format <format>]
+factlineage embedding backfill --project <name> [--format <format>]
 ```
 
 | Parameter | Required | Description |
@@ -322,15 +325,15 @@ Run `embedding model download` before backfill. A memory write can succeed witho
 Checks SQLite integrity, registered project paths, and embedding provider availability. It does not modify data.
 
 ```powershell
-aidoc doctor [--format <format>]
+factlineage doctor [--format <format>]
 ```
 
 ### `backup`
 
-Creates a consistent SQLite backup under `AIDOC_HOME\backups`.
+Creates a consistent SQLite backup under `FACTLINEAGE_HOME\backups`.
 
 ```powershell
-aidoc backup [--format <format>]
+factlineage backup [--format <format>]
 ```
 
 The command returns the created `backupPath`.
@@ -340,7 +343,7 @@ The command returns the created `backupPath`.
 Returns the CLI version and output schema version.
 
 ```powershell
-aidoc version [--format <format>]
+factlineage version [--format <format>]
 ```
 
 ## Output contract

@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $config = Get-Content -Raw $ParametersFile | ConvertFrom-Json
 $cloudRoot = Split-Path $PSScriptRoot -Parent
 $repositoryRoot = Split-Path $cloudRoot -Parent
-$dockerfile = Join-Path $cloudRoot 'src/AiDoc.Cloud.Api/Dockerfile'
+$dockerfile = Join-Path $cloudRoot 'src/FactLineage.Cloud.Api/Dockerfile'
 $buildContext = $cloudRoot
 
 function Assert-AzureCliSucceeded([string] $Operation) {
@@ -23,7 +23,7 @@ az group create `
 Assert-AzureCliSucceeded 'Resource group creation'
 
 az deployment group create `
-    --name 'aidoc-foundation' `
+    --name 'factlineage-foundation' `
     --resource-group $config.resourceGroup `
     --template-file (Join-Path $PSScriptRoot 'foundation.bicep') `
     --parameters `
@@ -83,7 +83,7 @@ Assert-AzureCliSucceeded 'Container build'
 
 $containerImage = "$($config.containerRegistryName).azurecr.io/$imageName"
 az deployment group create `
-    --name 'aidoc-application' `
+    --name 'factlineage-application' `
     --resource-group $config.resourceGroup `
     --template-file (Join-Path $PSScriptRoot 'app.bicep') `
     --parameters `

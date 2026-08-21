@@ -23,7 +23,7 @@ Execute from repository root:
 
 ```powershell
 .\cloud\infra\deploy.ps1 `
-  -ParametersFile .\.local\aidoc-cloud\deploy.parameters.json
+  -ParametersFile .\.local\factlineage-cloud\deploy.parameters.json
 ```
 
 ## Stage 1: Foundation
@@ -48,10 +48,10 @@ Then deploy `postgres-administrator.bicep` with the managed identity principal I
 `az acr build` avoids a local Docker dependency. Its build context is exactly:
 
 ```text
-cloud/src/AiDoc.Cloud.Api
+cloud
 ```
 
-Therefore `.dockerignore` must exist in that directory and exclude:
+The Dockerfile is `cloud/src/FactLineage.Cloud.Api/Dockerfile`. Therefore `.dockerignore` must exist at the cloud root and exclude:
 
 ```text
 bin/

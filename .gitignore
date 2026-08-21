@@ -56,8 +56,11 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
-# Local AI Doc files
+# Local FactLineage files
 /.local/
 /demos/
+/standalone/.factlineage/
+
+# Legacy local storage retained for migration
 /standalone/.aidoc/
 /standalone/artifacts/

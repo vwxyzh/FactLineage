@@ -14,7 +14,7 @@ az deployment operation group list `
   -o json
 ```
 
-Deployment names: `aidoc-foundation`, `postgres-entra-administrator`, and `aidoc-application`.
+Deployment names: `factlineage-foundation`, `postgres-entra-administrator`, and `factlineage-application`.
 
 ## Foundation failures
 

@@ -2,7 +2,7 @@
 
 ## Agent contract
 
-Use MCP for AI Doc business operations. Do not write directly to PostgreSQL. Discover project IDs with `list_projects`; do not trust IDs copied from another environment.
+Use MCP for FactLineage business operations. Do not write directly to PostgreSQL. Discover project IDs with `list_projects`; do not trust IDs copied from another environment.
 
 ## Tool surface
 
@@ -24,7 +24,7 @@ Install a pinned bridge in a Git-ignored directory:
 
 ```powershell
 npm install `
-  --prefix .local/aidoc-cloud/mcp-client `
+  --prefix .local/factlineage-cloud/mcp-client `
   --save-exact `
   mcp-remote@0.1.38
 ```
@@ -55,7 +55,7 @@ Use a persistent process; a one-shot pipeline may close stdin before the proxy r
 2. `notifications/initialized`.
 3. `tools/list`.
 
-Require server `AiDoc.Cloud.Api` and all seven tools.
+Require server `FactLineage.Cloud.Api` and all seven tools.
 
 ## Project bootstrap
 
@@ -69,8 +69,8 @@ Validated evidence, not a portable default:
 ```json
 {
   "id": "8b851503-a6ed-4de6-ab75-5798e005c764",
-  "name": "aidoc",
-  "repositoryUrl": "https://github.com/vwxyzh/aidoc.git"
+  "name": "FactLineage",
+  "repositoryUrl": "https://github.com/vwxyzh/FactLineage.git"
 }
 ```
 
@@ -81,7 +81,7 @@ The MCP does not upload file attachments. `report_memory.details` accepts arbitr
 ```json
 {
   "type": "decision",
-  "title": "AI Doc Cloud identity contract",
+  "title": "FactLineage Cloud identity contract",
   "summary": "Separates inbound Entra authentication from outbound managed identity and disables local Azure authentication.",
   "details": {
     "format": "markdown",

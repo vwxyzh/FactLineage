@@ -1,11 +1,11 @@
-# AI Doc
+# FactLineage
 
-AI Doc 是一个面向 AI Agent 的项目长时记忆系统。它持续记录代码库中的功能、接口、实现位置及其演进历史，让 Agent 在跨会话工作时能够快速恢复上下文，并基于可追溯的项目事实进行分析和修改。
+FactLineage 是一个面向 AI Agent 的项目长时记忆系统。它持续记录代码库中的功能、接口、实现位置及其演进历史，让 Agent 在跨会话工作时能够快速恢复上下文，并基于可追溯的项目事实进行分析和修改。
 
 当前实现目标是 3 天内完成核心闭环：
 
-- [AI Doc 单机 CLI 架构设计](standalone-architecture.md)：无需部署服务，适合本机 Agent 和个人开发。
-- [AI Doc Azure 三天 MVP 设计](azure-architecture.md)：适合需要远程访问和共享数据的团队。
+- [FactLineage 单机 CLI 架构设计](standalone-architecture.md)：无需部署服务，适合本机 Agent 和个人开发。
+- [FactLineage Azure 三天 MVP 设计](azure-architecture.md)：适合需要远程访问和共享数据的团队。
 
 ## 目标
 
