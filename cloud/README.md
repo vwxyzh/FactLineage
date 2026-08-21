@@ -85,6 +85,7 @@ Running the API locally requires the `Cloud__*` configuration values used in [ap
 
 | Operation | Endpoint |
 | --- | --- |
+| Browse registered projects | `GET /projects/` |
 | Discover MCP and Entra configuration | `GET /.well-known/factlineage-mcp.json` |
 | Process health | `GET /health` |
 | Create project | `POST /v1/projects` |

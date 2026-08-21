@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="FactLineage project directory">
+  <title>Projects | FactLineage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/projects/projects.css">
+  <script defer src="https://unpkg.com/@azure/msal-browser@5.18.0/lib/msal-browser.min.js" integrity="sha256-/hTqK7iCw5N+UQ0nN2T+4bKHJx6niao5xeVdqex73Ag=" crossorigin="anonymous"></script>
+  <script defer src="/projects/projects.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/projects/" aria-label="FactLineage projects">
+      <span class="brand-mark" aria-hidden="true">FL</span>
+      <span>FactLineage</span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a class="nav-link active" href="/projects/">Projects</a>
+      <a class="nav-link" href="/docs/">Agent docs</a>
+    </nav>
+    <div class="session-actions">
+      <span id="account-label" class="account-label" hidden></span>
+      <button id="refresh-button" class="button quiet" type="button" hidden>Refresh</button>
+      <button id="sign-out-button" class="button quiet" type="button" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Project registry</p>
+        <h1 id="page-title">Projects</h1>
+      </div>
+      <div class="registry-state">
+        <span id="state-dot" class="state-dot" aria-hidden="true"></span>
+        <span id="state-label">Connecting</span>
+      </div>
+    </section>
+
+    <section id="auth-panel" class="auth-panel" aria-labelledby="auth-title" hidden>
+      <div>
+        <p class="eyebrow">Microsoft Entra</p>
+        <h2 id="auth-title">Sign in to view the registry</h2>
+      </div>
+      <button id="sign-in-button" class="button primary" type="button">Sign in with Microsoft</button>
+    </section>
+
+    <section id="error-panel" class="error-panel" role="alert" hidden>
+      <div>
+        <p class="eyebrow">Request failed</p>
+        <p id="error-message"></p>
+      </div>
+      <button id="retry-button" class="button quiet" type="button">Try again</button>
+    </section>
+
+    <section id="registry" class="registry" aria-live="polite" hidden>
+      <div class="registry-summary">
+        <div>
+          <span class="summary-label">Registered projects</span>
+          <strong id="project-count">0</strong>
+        </div>
+        <label class="filter-control" for="project-filter">
+          <span>Filter</span>
+          <input id="project-filter" type="search" autocomplete="off" placeholder="Name, repository, or ID">
+        </label>
+      </div>
+
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Project</th>
+              <th scope="col">Repository</th>
+              <th scope="col">Created</th>
+              <th scope="col">Identifier</th>
+            </tr>
+          </thead>
+          <tbody id="project-rows"></tbody>
+        </table>
+        <p id="empty-state" class="empty-state" hidden>No projects match this filter.</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="project-row-template">
+    <tr>
+      <td data-cell="Project"><strong class="project-name"></strong></td>
+      <td data-cell="Repository" class="repository-cell"></td>
+      <td data-cell="Created"><time class="created-at"></time></td>
+      <td data-cell="Identifier"><code class="project-id"></code></td>
+    </tr>
+  </template>
+</body>
+</html>
